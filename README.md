@@ -50,7 +50,21 @@ for every row is a classic N+1. The section-availability and seat-map queries in
 single `join` query (`GameSeatRepository`), so each endpoint runs exactly one SQL statement regardless of seat count. See
 `docs/experiments/v1-03-seat-map-n-plus-1.md` for the measured query counts (51 vs. 1 for 50 seats).
 
-## Error responses
+## Reservation / payment / cancellation API
+
+| Method | Path | Notes |
+|---|---|---|
+| `POST` | `/api/games/{gameId}/reservations` | Body `{ "gameSeatIds": [...] }` (1–4 seats), header `X-User-Id`. Holds each seat and creates a `PENDING` reservation. |
+| `POST` | `/api/reservations/{reservationId}/payments` | Body `{ "success": true\|false }` — mock payment, no real PG. `true` confirms the reservation and sells the seats; `false` just marks the payment `FAILED` so the reservation stays `PENDING` and can be retried. |
+| `POST` | `/api/reservations/{reservationId}/cancel` | Cancels the reservation and releases its seats back to `AVAILABLE`. Refunding a paid reservation is out of scope for v1 (#5). |
+| `PATCH` | `/api/admin/games/{gameId}/open` | Admin: `SCHEDULED` → `OPEN`. Needed before any reservation can be made against that game. |
+
+Rules enforced in `ReservationService`:
+- The game must be `OPEN` (`GAME-003` otherwise).
+- Every requested `GameSeat` must belong to the game in the path, not just exist somewhere (`RESERVATION-004`) — this is #1 from the issue tracker.
+- A user can hold at most 4 seats per game, counted across all of that user's non-cancelled reservations for it, not just the current request (`RESERVATION-005`).
+
+## Query API
 
 Every error is returned as RFC 9457 `application/problem+json`. Besides the standard fields, `code` carries the application error code (`ErrorCode`), and validation failures add `errors`.
 
