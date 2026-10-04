@@ -1,0 +1,5 @@
+# The datasource comes from the Testcontainers MySQL container (@ServiceConnection).
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
