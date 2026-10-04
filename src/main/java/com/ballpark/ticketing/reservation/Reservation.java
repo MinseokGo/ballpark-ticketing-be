@@ -1,6 +1,8 @@
 package com.ballpark.ticketing.reservation;
 
 import com.ballpark.ticketing.common.entity.BaseTimeEntity;
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameSeat;
 import jakarta.persistence.CascadeType;
@@ -50,7 +52,7 @@ public class Reservation extends BaseTimeEntity {
 
 	public Reservation(Long userId, Game game, List<GameSeat> gameSeats, long totalPrice) {
 		if (gameSeats.isEmpty()) {
-			throw new IllegalArgumentException("a reservation needs at least one seat");
+			throw new BusinessException(ErrorCode.RESERVATION_SEATS_EMPTY);
 		}
 		this.userId = userId;
 		this.game = game;
@@ -65,14 +67,14 @@ public class Reservation extends BaseTimeEntity {
 
 	public void confirm() {
 		if (status != ReservationStatus.PENDING) {
-			throw new IllegalStateException("only a PENDING reservation can be confirmed: " + status);
+			throw new BusinessException(ErrorCode.RESERVATION_NOT_PENDING);
 		}
 		this.status = ReservationStatus.CONFIRMED;
 	}
 
 	public void cancel() {
 		if (status == ReservationStatus.CANCELLED) {
-			throw new IllegalStateException("reservation is already CANCELLED");
+			throw new BusinessException(ErrorCode.RESERVATION_ALREADY_CANCELLED);
 		}
 		this.status = ReservationStatus.CANCELLED;
 	}

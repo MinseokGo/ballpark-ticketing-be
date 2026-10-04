@@ -3,6 +3,8 @@ package com.ballpark.ticketing.game;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 
@@ -27,14 +29,18 @@ class GameSeatTest {
 		GameSeat gameSeat = new GameSeat(game, seat);
 		gameSeat.hold();
 
-		assertThatThrownBy(gameSeat::hold).isInstanceOf(IllegalStateException.class);
+		assertThatThrownBy(gameSeat::hold)
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode").isEqualTo(ErrorCode.SEAT_NOT_AVAILABLE);
 	}
 
 	@Test
 	void rejectsSellingASeatThatWasNotHeld() {
 		GameSeat gameSeat = new GameSeat(game, seat);
 
-		assertThatThrownBy(gameSeat::sell).isInstanceOf(IllegalStateException.class);
+		assertThatThrownBy(gameSeat::sell)
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode").isEqualTo(ErrorCode.SEAT_NOT_HELD);
 	}
 
 	@Test
