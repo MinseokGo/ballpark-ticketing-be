@@ -23,6 +23,19 @@ com.ballpark.ticketing
 
 - `spring.jpa.open-in-view: false`: lazy loading only happens inside a transaction, so an entity is never lazily loaded from a controller or during JSON serialization, and a DB connection is not held for the whole request.
 
+## Admin API
+
+| Method | Path | Body |
+|---|---|---|
+| `POST` | `/api/admin/sections` | `{ "name": "Infield 101", "grade": "R", "price": 30000 }` |
+| `POST` | `/api/admin/sections/{sectionId}/seats` | `{ "rowCount": 20, "seatsPerRow": 30 }` — fills a `rowCount` x `seatsPerRow` grid |
+| `POST` | `/api/admin/games` | `{ "homeTeam": "...", "awayTeam": "...", "startAt": "...", "ticketOpenAt": "..." }` — also creates one `GameSeat` per existing `Seat` |
+
+Bulk seat/game-seat creation goes through `JdbcTemplate` batch inserts, not `JpaRepository.saveAll()`. Both `Seat` and
+`GameSeat` use `GenerationType.IDENTITY`, and Hibernate disables JDBC batching for that strategy (it needs each row's
+generated key right away), so `saveAll()` on these tables is just N individual round trips. See
+`docs/experiments/v1-02-admin-bulk-insert.md` for the measured difference.
+
 ## Error responses
 
 Every error is returned as RFC 9457 `application/problem+json`. Besides the standard fields, `code` carries the application error code (`ErrorCode`), and validation failures add `errors`.
