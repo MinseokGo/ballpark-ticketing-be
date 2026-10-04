@@ -21,6 +21,7 @@ public enum ErrorCode {
 	SEAT_ALREADY_AVAILABLE(HttpStatus.CONFLICT, "SEAT-004", "이미 판매 가능한 좌석입니다."),
 	SECTION_NOT_FOUND(HttpStatus.NOT_FOUND, "SEAT-005", "존재하지 않는 구역입니다."),
 	SECTION_NAME_DUPLICATE(HttpStatus.CONFLICT, "SEAT-006", "이미 존재하는 구역 이름입니다."),
+	GAME_SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "SEAT-007", "존재하지 않는 좌석입니다."),
 
 	// 경기
 	INVALID_GAME_SCHEDULE(HttpStatus.BAD_REQUEST, "GAME-001", "예매 오픈 시각은 경기 시작 시각보다 이전이어야 합니다."),
@@ -32,6 +33,9 @@ public enum ErrorCode {
 	RESERVATION_SEATS_EMPTY(HttpStatus.BAD_REQUEST, "RESERVATION-001", "예약할 좌석을 1개 이상 선택해야 합니다."),
 	RESERVATION_NOT_PENDING(HttpStatus.CONFLICT, "RESERVATION-002", "대기 상태의 예약만 확정할 수 있습니다."),
 	RESERVATION_ALREADY_CANCELLED(HttpStatus.CONFLICT, "RESERVATION-003", "이미 취소된 예약입니다."),
+	SEAT_GAME_MISMATCH(HttpStatus.BAD_REQUEST, "RESERVATION-004", "선택한 좌석이 예약 대상 경기의 좌석이 아닙니다."),
+	TICKET_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "RESERVATION-005", "한 사용자가 한 경기에서 예약할 수 있는 좌석은 최대 4매입니다."),
+	RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RESERVATION-006", "존재하지 않는 예약입니다."),
 
 	// 결제
 	PAYMENT_NOT_PENDING(HttpStatus.CONFLICT, "PAYMENT-001", "대기 상태의 결제만 처리할 수 있습니다.");
