@@ -109,8 +109,8 @@ API를 추가할 때는 도메인 패키지 안에 controller, service, reposito
 |---|---|---|
 | 0 | 프로젝트 뼈대, v1 엔티티 7개 | 완료 (PR #7) |
 | 1 | 공통 예외 처리 (ErrorCode, ProblemDetail) | PR #8 |
-| 2 | 관리자 API: 구역 등록, 좌석 일괄 등록, 경기 등록 시 GameSeat 자동 생성 (`saveAll` vs JDBC batch 시간 측정 기록) | 다음 |
-| 3 | 조회 API: 경기 목록(페이징), 상세, 구역별 잔여석, 좌석맵 (N+1 확인 후 해결) | |
+| 2 | 관리자 API: 구역 등록, 좌석 일괄 등록, 경기 등록 시 GameSeat 자동 생성 (`saveAll` vs JDBC batch 시간 측정 기록) | 완료 (PR #10) |
+| 3 | 조회 API: 경기 목록(페이징), 상세, 구역별 잔여석, 좌석맵 (N+1 확인 후 해결) | 진행 중 |
 | 4 | 예매, 결제(Mock), 취소 API: 1인 경기당 최대 4매, 오픈 전 예매 불가, #1 경기 일치 검증 | |
 | 5 | 시딩(구역 30, 좌석 22,000, 경기 5), `docs/experiments/v1-*.md`, `git tag v1.0` | |
 

@@ -26,6 +26,7 @@ public enum ErrorCode {
 	INVALID_GAME_SCHEDULE(HttpStatus.BAD_REQUEST, "GAME-001", "예매 오픈 시각은 경기 시작 시각보다 이전이어야 합니다."),
 	GAME_NOT_SCHEDULED(HttpStatus.CONFLICT, "GAME-002", "예정 상태의 경기만 예매를 오픈할 수 있습니다."),
 	GAME_NOT_OPEN(HttpStatus.CONFLICT, "GAME-003", "예매가 오픈된 경기가 아닙니다."),
+	GAME_NOT_FOUND(HttpStatus.NOT_FOUND, "GAME-004", "존재하지 않는 경기입니다."),
 
 	// 예약
 	RESERVATION_SEATS_EMPTY(HttpStatus.BAD_REQUEST, "RESERVATION-001", "예약할 좌석을 1개 이상 선택해야 합니다."),
