@@ -19,6 +19,8 @@ public enum ErrorCode {
 	SEAT_NOT_AVAILABLE(HttpStatus.CONFLICT, "SEAT-002", "선점할 수 없는 좌석입니다."),
 	SEAT_NOT_HELD(HttpStatus.CONFLICT, "SEAT-003", "선점되지 않은 좌석은 판매할 수 없습니다."),
 	SEAT_ALREADY_AVAILABLE(HttpStatus.CONFLICT, "SEAT-004", "이미 판매 가능한 좌석입니다."),
+	SECTION_NOT_FOUND(HttpStatus.NOT_FOUND, "SEAT-005", "존재하지 않는 구역입니다."),
+	SECTION_NAME_DUPLICATE(HttpStatus.CONFLICT, "SEAT-006", "이미 존재하는 구역 이름입니다."),
 
 	// 경기
 	INVALID_GAME_SCHEDULE(HttpStatus.BAD_REQUEST, "GAME-001", "예매 오픈 시각은 경기 시작 시각보다 이전이어야 합니다."),
