@@ -36,6 +36,20 @@ Bulk seat/game-seat creation goes through `JdbcTemplate` batch inserts, not `Jpa
 generated key right away), so `saveAll()` on these tables is just N individual round trips. See
 `docs/experiments/v1-02-admin-bulk-insert.md` for the measured difference.
 
+## Query API
+
+| Method | Path | Notes |
+|---|---|---|
+| `GET` | `/api/games?page=&size=` | Paged list, sorted by `startAt` by default. Max page size 100 (`spring.data.web.pageable.max-page-size`). |
+| `GET` | `/api/games/{gameId}` | Detail, including `gameSeatCount`. |
+| `GET` | `/api/games/{gameId}/sections` | Per-section seat counts (total/available/held/sold) for that game. |
+| `GET` | `/api/games/{gameId}/seats` | Full seat map for that game (one row per `GameSeat`). |
+
+`GameSeat.seat` and `Seat.section` are both lazy `@ManyToOne`s, so walking the entities (`gameSeat.getSeat().getSection()`)
+for every row is a classic N+1. The section-availability and seat-map queries instead project straight into a DTO with a
+single `join` query (`GameSeatRepository`), so each endpoint runs exactly one SQL statement regardless of seat count. See
+`docs/experiments/v1-03-seat-map-n-plus-1.md` for the measured query counts (51 vs. 1 for 50 seats).
+
 ## Error responses
 
 Every error is returned as RFC 9457 `application/problem+json`. Besides the standard fields, `code` carries the application error code (`ErrorCode`), and validation failures add `errors`.
