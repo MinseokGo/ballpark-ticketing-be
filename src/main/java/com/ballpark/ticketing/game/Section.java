@@ -1,5 +1,7 @@
 package com.ballpark.ticketing.game;
 
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
@@ -29,7 +31,7 @@ public class Section {
 
 	public Section(String name, String grade, long price) {
 		if (price < 0) {
-			throw new IllegalArgumentException("price must not be negative");
+			throw new BusinessException(ErrorCode.INVALID_SECTION_PRICE);
 		}
 		this.name = name;
 		this.grade = grade;

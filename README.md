@@ -19,6 +19,41 @@ com.ballpark.ticketing
 └── common       shared JPA config and base entity
 ```
 
+## Configuration notes
+
+- `spring.jpa.open-in-view: false`: lazy loading only happens inside a transaction, so an entity is never lazily loaded from a controller or during JSON serialization, and a DB connection is not held for the whole request.
+
+## Error responses
+
+Every error is returned as RFC 9457 `application/problem+json`. Besides the standard fields, `code` carries the application error code (`ErrorCode`), and validation failures add `errors`.
+
+```json
+{
+  "type": "about:blank",
+  "title": "Conflict",
+  "status": 409,
+  "detail": "선점할 수 없는 좌석입니다.",
+  "instance": "/api/games/1/reservations",
+  "code": "SEAT-002"
+}
+```
+
+```json
+{
+  "title": "Bad Request",
+  "status": 400,
+  "detail": "입력값이 올바르지 않습니다.",
+  "instance": "/api/games/1/reservations",
+  "code": "COMMON-001",
+  "errors": [
+    { "field": "seatIds", "reason": "크기가 0에서 4 사이여야 합니다" }
+  ]
+}
+```
+
+- Domain rule violations throw `BusinessException(ErrorCode)`. The HTTP status comes from the `ErrorCode`.
+- Unexpected exceptions return `COMMON-999` without exposing the internal message, and are logged with the stack trace.
+
 ## Running locally
 
 Requirements: Docker. A local JDK 21+ is enough to launch Gradle.

@@ -1,5 +1,7 @@
 package com.ballpark.ticketing.game;
 
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -48,21 +50,21 @@ public class GameSeat {
 
 	public void hold() {
 		if (status != GameSeatStatus.AVAILABLE) {
-			throw new IllegalStateException("only an AVAILABLE seat can be held: " + status);
+			throw new BusinessException(ErrorCode.SEAT_NOT_AVAILABLE);
 		}
 		this.status = GameSeatStatus.HELD;
 	}
 
 	public void sell() {
 		if (status != GameSeatStatus.HELD) {
-			throw new IllegalStateException("only a HELD seat can be sold: " + status);
+			throw new BusinessException(ErrorCode.SEAT_NOT_HELD);
 		}
 		this.status = GameSeatStatus.SOLD;
 	}
 
 	public void release() {
 		if (status == GameSeatStatus.AVAILABLE) {
-			throw new IllegalStateException("seat is already AVAILABLE");
+			throw new BusinessException(ErrorCode.SEAT_ALREADY_AVAILABLE);
 		}
 		this.status = GameSeatStatus.AVAILABLE;
 	}

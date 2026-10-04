@@ -1,6 +1,8 @@
 package com.ballpark.ticketing.payment;
 
 import com.ballpark.ticketing.common.entity.BaseTimeEntity;
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.reservation.Reservation;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -44,14 +46,14 @@ public class Payment extends BaseTimeEntity {
 
 	public void complete() {
 		if (status != PaymentStatus.PENDING) {
-			throw new IllegalStateException("only a PENDING payment can be completed: " + status);
+			throw new BusinessException(ErrorCode.PAYMENT_NOT_PENDING);
 		}
 		this.status = PaymentStatus.PAID;
 	}
 
 	public void fail() {
 		if (status != PaymentStatus.PENDING) {
-			throw new IllegalStateException("only a PENDING payment can fail: " + status);
+			throw new BusinessException(ErrorCode.PAYMENT_NOT_PENDING);
 		}
 		this.status = PaymentStatus.FAILED;
 	}

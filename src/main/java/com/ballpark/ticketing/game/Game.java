@@ -1,5 +1,7 @@
 package com.ballpark.ticketing.game;
 
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -39,7 +41,7 @@ public class Game {
 
 	public Game(String homeTeam, String awayTeam, LocalDateTime startAt, LocalDateTime ticketOpenAt) {
 		if (!ticketOpenAt.isBefore(startAt)) {
-			throw new IllegalArgumentException("ticketOpenAt must be before startAt");
+			throw new BusinessException(ErrorCode.INVALID_GAME_SCHEDULE);
 		}
 		this.homeTeam = homeTeam;
 		this.awayTeam = awayTeam;
@@ -50,14 +52,14 @@ public class Game {
 
 	public void openTicketing() {
 		if (status != GameStatus.SCHEDULED) {
-			throw new IllegalStateException("only a SCHEDULED game can be opened: " + status);
+			throw new BusinessException(ErrorCode.GAME_NOT_SCHEDULED);
 		}
 		this.status = GameStatus.OPEN;
 	}
 
 	public void closeTicketing() {
 		if (status != GameStatus.OPEN) {
-			throw new IllegalStateException("only an OPEN game can be closed: " + status);
+			throw new BusinessException(ErrorCode.GAME_NOT_OPEN);
 		}
 		this.status = GameStatus.CLOSED;
 	}

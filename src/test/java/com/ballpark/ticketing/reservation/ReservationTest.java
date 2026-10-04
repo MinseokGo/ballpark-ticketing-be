@@ -3,6 +3,8 @@ package com.ballpark.ticketing.reservation;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameSeat;
 import com.ballpark.ticketing.game.Seat;
@@ -32,12 +34,15 @@ class ReservationTest {
 		Reservation reservation = new Reservation(1L, game, List.of(gameSeat), 30_000);
 		reservation.cancel();
 
-		assertThatThrownBy(reservation::confirm).isInstanceOf(IllegalStateException.class);
+		assertThatThrownBy(reservation::confirm)
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode").isEqualTo(ErrorCode.RESERVATION_NOT_PENDING);
 	}
 
 	@Test
 	void rejectsAReservationWithoutSeats() {
 		assertThatThrownBy(() -> new Reservation(1L, game, List.of(), 0))
-				.isInstanceOf(IllegalArgumentException.class);
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode").isEqualTo(ErrorCode.RESERVATION_SEATS_EMPTY);
 	}
 }
