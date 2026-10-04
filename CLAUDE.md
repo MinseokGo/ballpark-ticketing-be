@@ -72,7 +72,11 @@ API를 추가할 때는 도메인 패키지 안에 controller, service, reposito
 | JPA / 서비스 통합 | `@Import(TestcontainersConfiguration.class)` + `@ActiveProfiles("test")`. `@DataJpaTest`는 `@AutoConfigureTestDatabase(replace = NONE)` 추가, 감사(auditing)가 필요하면 `JpaAuditingConfig`도 import |
 | 컨트롤러 | `@WebMvcTest` + `MockMvc` |
 
-테스트 데이터의 팀 이름은 가상의 이름만 쓴다 (Seoul Comets, Busan Gulls, Daegu Owls 등).
+자동화 테스트(단위·통합·컨트롤러)의 팀 이름은 가상의 이름만 쓴다 (Seoul Comets, Busan Gulls, Daegu Owls 등).
+수동 시딩·데모용 데이터(예: FE 로컬 개발 시드 스크립트)는 화면이 실제 서비스처럼 보여야 해서 실제 KBO
+구단 이름을 쓸 수 있다 — 두산 베어스, LG 트윈스, KIA 타이거즈, 삼성 라이온즈, SSG 랜더스, 롯데 자이언츠,
+한화 이글스, NC 다이노스, KT 위즈, 키움 히어로즈. 이 경기들의 일정(날짜·시간)은 실제가 아니라 데모용으로
+임의로 정한다. 이 예외는 데이터에만 적용되고, 실제 KBO API 연동은 하지 않는다(범위 밖).
 
 ### Spring Boot 4 주의점
 - 테스트 어노테이션 패키지가 바뀌었다.
