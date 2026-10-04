@@ -95,6 +95,18 @@ Every error is returned as RFC 9457 `application/problem+json`. Besides the stan
 - Domain rule violations throw `BusinessException(ErrorCode)`. The HTTP status comes from the `ErrorCode`.
 - Unexpected exceptions return `COMMON-999` without exposing the internal message, and are logged with the stack trace.
 
+## Demo seed
+
+`seed` 프로필을 켜면 구역 30개, 좌석 22,536석, 경기 5개(예매 오픈 2개)가 들어간다. 시딩은 구역이 이미 있으면
+건너뛴다. 
+
+```bash
+./gradlew bootRun --args='--spring.profiles.active=local,seed'
+```
+
+프론트엔드 지도가 구역 이름 체계(중앙석/1·3루 필드석/1·3루 외야석 x A~C x 1·2블록)를 해석하므로 구역 이름은
+바꾸지 않는다. 측정 결과는 `docs/experiments/v1-05-seeding.md`.
+
 ## Running locally
 
 Requirements: Docker. A local JDK 21+ is enough to launch Gradle.
