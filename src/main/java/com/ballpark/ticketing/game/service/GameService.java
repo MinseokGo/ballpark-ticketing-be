@@ -1,10 +1,13 @@
 package com.ballpark.ticketing.game.service;
 
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.dto.GameCreateRequest;
 import com.ballpark.ticketing.game.dto.GameResponse;
 import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.repository.GameSeatJdbcRepository;
+import com.ballpark.ticketing.game.repository.GameSeatRepository;
 import com.ballpark.ticketing.game.repository.SeatRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -16,13 +19,15 @@ public class GameService {
 
 	private final GameRepository gameRepository;
 	private final SeatRepository seatRepository;
+	private final GameSeatRepository gameSeatRepository;
 	private final GameSeatJdbcRepository gameSeatJdbcRepository;
 
 	public GameService(
-			GameRepository gameRepository, SeatRepository seatRepository,
+			GameRepository gameRepository, SeatRepository seatRepository, GameSeatRepository gameSeatRepository,
 			GameSeatJdbcRepository gameSeatJdbcRepository) {
 		this.gameRepository = gameRepository;
 		this.seatRepository = seatRepository;
+		this.gameSeatRepository = gameSeatRepository;
 		this.gameSeatJdbcRepository = gameSeatJdbcRepository;
 	}
 
@@ -35,5 +40,14 @@ public class GameService {
 		List<Long> seatIds = seatRepository.findAllIds();
 		int gameSeatCount = gameSeatJdbcRepository.batchInsert(game.getId(), seatIds);
 		return GameResponse.of(game, gameSeatCount);
+	}
+
+	/**
+	 * 예매를 오픈한다(SCHEDULED -> OPEN). 예매·결제 API는 이 상태가 아니면 좌석을 선점할 수 없다.
+	 */
+	public GameResponse openTicketing(Long gameId) {
+		Game game = gameRepository.findById(gameId).orElseThrow(() -> new BusinessException(ErrorCode.GAME_NOT_FOUND));
+		game.openTicketing();
+		return GameResponse.of(game, (int) gameSeatRepository.countByGame_Id(gameId));
 	}
 }

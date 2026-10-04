@@ -1,8 +1,12 @@
 package com.ballpark.ticketing.game.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.ballpark.ticketing.TestcontainersConfiguration;
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
+import com.ballpark.ticketing.game.GameStatus;
 import com.ballpark.ticketing.game.Section;
 import com.ballpark.ticketing.game.dto.GameCreateRequest;
 import com.ballpark.ticketing.game.dto.GameResponse;
@@ -55,5 +59,37 @@ class GameServiceTest {
 
 		assertThat(response.gameSeatCount()).isEqualTo(50);
 		assertThat(gameSeatRepository.count()).isEqualTo(50);
+	}
+
+	@Test
+	void opensTicketingForAScheduledGame() {
+		GameResponse created = gameService.create(new GameCreateRequest(
+				"Seoul Comets", "Busan Gulls",
+				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0)));
+
+		GameResponse opened = gameService.openTicketing(created.id());
+
+		assertThat(opened.status()).isEqualTo(GameStatus.OPEN);
+	}
+
+	@Test
+	void rejectsOpeningAnUnknownGame() {
+		assertThatThrownBy(() -> gameService.openTicketing(999_999L))
+				.isInstanceOf(BusinessException.class)
+				.extracting(e -> ((BusinessException) e).getErrorCode())
+				.isEqualTo(ErrorCode.GAME_NOT_FOUND);
+	}
+
+	@Test
+	void rejectsOpeningAGameThatIsAlreadyOpen() {
+		GameResponse created = gameService.create(new GameCreateRequest(
+				"Seoul Comets", "Busan Gulls",
+				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0)));
+		gameService.openTicketing(created.id());
+
+		assertThatThrownBy(() -> gameService.openTicketing(created.id()))
+				.isInstanceOf(BusinessException.class)
+				.extracting(e -> ((BusinessException) e).getErrorCode())
+				.isEqualTo(ErrorCode.GAME_NOT_SCHEDULED);
 	}
 }
