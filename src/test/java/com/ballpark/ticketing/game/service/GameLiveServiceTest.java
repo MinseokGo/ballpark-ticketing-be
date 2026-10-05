@@ -42,7 +42,7 @@ class GameLiveServiceTest {
 	private GameResponse createGame() {
 		return gameService.create(new GameCreateRequest(
 				"Seoul Comets", "Busan Gulls",
-				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0)));
+				LocalDateTime.of(2020, 11, 1, 18, 30), LocalDateTime.of(2020, 10, 25, 11, 0)));
 	}
 
 	@Test
@@ -118,7 +118,7 @@ class GameLiveServiceTest {
 	void recordsAPlayWithItsPlayerAndKind() {
 		GameResponse game = gameService.create(new GameCreateRequest(
 				"두산 베어스", "LG 트윈스",
-				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0)));
+				LocalDateTime.of(2020, 11, 1, 18, 30), LocalDateTime.of(2020, 10, 25, 11, 0)));
 		gameLiveService.record(game.id(), new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
 		Long batter = rosterPlayerId("두산 베어스");
 		Long pitcher = rosterPlayerId("LG 트윈스");
@@ -135,7 +135,7 @@ class GameLiveServiceTest {
 	void rejectsAPlayWithoutAKnownKind() {
 		GameResponse game = gameService.create(new GameCreateRequest(
 				"두산 베어스", "LG 트윈스",
-				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0)));
+				LocalDateTime.of(2020, 11, 1, 18, 30), LocalDateTime.of(2020, 10, 25, 11, 0)));
 		gameLiveService.record(game.id(), new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
 		Long batter = rosterPlayerId("두산 베어스");
 

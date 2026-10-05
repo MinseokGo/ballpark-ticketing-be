@@ -112,11 +112,17 @@ public class Game {
 		return !now.isBefore(startAt);
 	}
 
-	public void start() {
+	/**
+	 * 시작 시각이 지난 뒤에만 시작한다. 예정 전에 중계가 올라가는 일을 여기서 막아서, 관리자 API든 생성기든 같은 규칙을 따른다.
+	 */
+	public void start(LocalDateTime now) {
 		if (progress == GameProgress.LIVE) {
 			throw new BusinessException(ErrorCode.GAME_ALREADY_STARTED);
 		}
 		requireNotEnded();
+		if (!hasStarted(now)) {
+			throw new BusinessException(ErrorCode.GAME_NOT_YET_STARTABLE);
+		}
 		this.progress = GameProgress.LIVE;
 		this.inning = 1;
 		this.half = Half.TOP;

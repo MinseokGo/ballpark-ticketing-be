@@ -119,14 +119,14 @@ public class LiveGameSimulator {
 	}
 
 	/**
-	 * 중계를 돌리는 진행 중 경기. 예정 시각이 아직 오지 않은 경기는 뺀다.
-	 * 데이터 테스트용으로 미래 경기를 진행 중으로 두면, 이 생성기가 몇 분 안에 끝내 버리지 않게 하려는 것이다.
+	 * 생성기가 돌리는 진행 중 경기. 예정 종료 시각이 있는 일정 배치 경기만 본다.
+	 * 종료 시각이 없는 경기(관리자가 직접 만든 경기)는 관리자가 끝낼 때까지 자동으로 건드리지 않는다.
 	 */
 	private List<Long> liveGameIds() {
 		LocalDateTime now = LocalDateTime.now(clock);
 		return gameRepository.findByProgress(GameProgress.LIVE, Pageable.unpaged())
 				.stream()
-				.filter(game -> !game.getStartAt().isAfter(now))
+				.filter(game -> game.getPlannedEndAt() != null && !game.getStartAt().isAfter(now))
 				.map(Game::getId)
 				.toList();
 	}
