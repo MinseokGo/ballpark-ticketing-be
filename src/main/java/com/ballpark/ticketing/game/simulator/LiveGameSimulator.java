@@ -3,12 +3,14 @@ package com.ballpark.ticketing.game.simulator;
 import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameEventType;
 import com.ballpark.ticketing.game.GameProgress;
+import com.ballpark.ticketing.game.Player;
 import com.ballpark.ticketing.game.Half;
 import com.ballpark.ticketing.game.dto.GameCreateRequest;
 import com.ballpark.ticketing.game.dto.GameResponse;
 import com.ballpark.ticketing.game.dto.LiveEventCreateRequest;
 import com.ballpark.ticketing.game.dto.LiveStateResponse;
 import com.ballpark.ticketing.game.repository.GameRepository;
+import com.ballpark.ticketing.game.repository.PlayerRepository;
 import com.ballpark.ticketing.game.service.GameLiveService;
 import com.ballpark.ticketing.game.service.GameService;
 import java.time.Clock;
@@ -39,6 +41,7 @@ public class LiveGameSimulator {
 	// 한 번 돌 때마다 대부분 이벤트가 하나씩 나오도록 확률을 잡는다(나머지 15%는 조용한 순간).
 	private static final double SCORE_PROBABILITY = 0.50;
 	private static final double HALF_INNING_END_PROBABILITY = 0.35;
+	private static final List<String> DETAILS = List.of("안타", "2루타", "홈런", "희생플라이", "밀어내기", "폭투");
 	private static final List<String[]> TEAM_PAIRS = List.of(
 			new String[] {"두산 베어스", "LG 트윈스"},
 			new String[] {"KIA 타이거즈", "삼성 라이온즈"},
@@ -49,6 +52,7 @@ public class LiveGameSimulator {
 	private final GameRepository gameRepository;
 	private final GameLiveService gameLiveService;
 	private final GameService gameService;
+	private final PlayerRepository playerRepository;
 	private final Clock clock;
 	private final boolean enabled;
 	private final RandomGenerator random = RandomGenerator.getDefault();
@@ -57,11 +61,13 @@ public class LiveGameSimulator {
 			GameRepository gameRepository,
 			GameLiveService gameLiveService,
 			GameService gameService,
+			PlayerRepository playerRepository,
 			Clock clock,
 			@Value("${app.live-simulator.enabled:false}") boolean enabled) {
 		this.gameRepository = gameRepository;
 		this.gameLiveService = gameLiveService;
 		this.gameService = gameService;
+		this.playerRepository = playerRepository;
 		this.clock = clock;
 		this.enabled = enabled;
 	}
@@ -139,12 +145,18 @@ public class LiveGameSimulator {
 		}
 	}
 
+	/** 득점은 공격 중인 팀이 한다(초는 원정, 말은 홈). 타자는 그 팀 명단에서 고른다. */
 	private void scoreOnce(LiveStateResponse state, RandomGenerator random) {
-		boolean homeScores = random.nextBoolean();
-		int home = state.homeScore() + (homeScores ? 1 : 0);
-		int away = state.awayScore() + (homeScores ? 0 : 1);
+		Game game = gameRepository.findById(state.gameId()).orElseThrow();
+		boolean homeBatting = state.half() == Half.BOTTOM;
+		int home = state.homeScore() + (homeBatting ? 1 : 0);
+		int away = state.awayScore() + (homeBatting ? 0 : 1);
+		String battingTeam = homeBatting ? game.getHomeTeam() : game.getAwayTeam();
+		List<Player> roster = playerRepository.findByTeamNameOrderByBackNumberAsc(battingTeam);
+		Long playerId = roster.isEmpty() ? null : roster.get(random.nextInt(roster.size())).getId();
+		String detail = DETAILS.get(random.nextInt(DETAILS.size()));
 		gameLiveService.record(state.gameId(),
-				new LiveEventCreateRequest(GameEventType.SCORE_CHANGED, null, null, home, away));
+				new LiveEventCreateRequest(GameEventType.SCORE_CHANGED, null, null, home, away, playerId, detail));
 	}
 
 	private void endHalfInning(LiveStateResponse state) {

@@ -29,6 +29,7 @@ public enum ErrorCode {
 	GAME_NOT_SCHEDULED(HttpStatus.CONFLICT, "GAME-002", "예정 상태의 경기만 예매를 오픈할 수 있습니다."),
 	GAME_NOT_OPEN(HttpStatus.CONFLICT, "GAME-003", "예매가 오픈된 경기가 아닙니다."),
 	GAME_NOT_FOUND(HttpStatus.NOT_FOUND, "GAME-004", "존재하지 않는 경기입니다."),
+	PLAYER_NOT_FOUND(HttpStatus.NOT_FOUND, "PLAYER-001", "존재하지 않는 선수입니다."),
 	GAME_NOT_LIVE(HttpStatus.CONFLICT, "GAME-005", "진행 중인 경기가 아닙니다."),
 	GAME_ALREADY_STARTED(HttpStatus.CONFLICT, "GAME-006", "이미 시작된 경기입니다."),
 	GAME_ALREADY_ENDED(HttpStatus.CONFLICT, "GAME-007", "이미 종료되었거나 취소된 경기입니다."),

@@ -60,7 +60,21 @@ public class GameEvent extends BaseTimeEntity {
 	@Column(nullable = false)
 	private int awayScore;
 
+	// 득점 등 선수가 관여한 이벤트에만 붙는다(없으면 null).
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "player_id")
+	private Player player;
+
+	// 선수 기록의 종류. 예: 안타, 홈런. 자유 문자열 대신 짧은 값만 받는다.
+	@Column(length = 20)
+	private String detail;
+
 	public GameEvent(Game game, int seq, GameEventType type, Integer inning, Half half, int homeScore, int awayScore) {
+		this(game, seq, type, inning, half, homeScore, awayScore, null, null);
+	}
+
+	public GameEvent(Game game, int seq, GameEventType type, Integer inning, Half half, int homeScore, int awayScore,
+			Player player, String detail) {
 		this.game = game;
 		this.seq = seq;
 		this.type = type;
@@ -68,5 +82,7 @@ public class GameEvent extends BaseTimeEntity {
 		this.half = half;
 		this.homeScore = homeScore;
 		this.awayScore = awayScore;
+		this.player = player;
+		this.detail = detail;
 	}
 }
