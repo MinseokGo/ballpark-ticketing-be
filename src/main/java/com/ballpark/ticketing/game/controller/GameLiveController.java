@@ -31,6 +31,12 @@ public class GameLiveController {
 		return gameLiveService.snapshot(gameId);
 	}
 
+	/** 경기 기록 전체. 끝난 경기를 다시 보거나 늦게 들어온 사람이 한 번에 받을 때 쓴다. */
+	@GetMapping("/events")
+	public List<LiveEventResponse> allEvents(@PathVariable Long gameId) {
+		return gameLiveService.allEvents(gameId);
+	}
+
 	/**
 	 * 실시간 스트림. 재접속이면 Last-Event-ID 이후 이벤트를 먼저 보내고, 이미 끝난 경기면 바로 닫는다.
 	 * 구독을 리플레이보다 먼저 등록해서 그 사이에 온 이벤트를 놓치지 않는다(절대값이라 중복은 무해하다).

@@ -5,6 +5,8 @@ import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameEvent;
 import com.ballpark.ticketing.game.GameEventType;
+import com.ballpark.ticketing.game.Player;
+import com.ballpark.ticketing.game.repository.PlayerRepository;
 import com.ballpark.ticketing.game.dto.LiveEventCreateRequest;
 import com.ballpark.ticketing.game.dto.LiveEventResponse;
 import com.ballpark.ticketing.game.dto.LiveStateResponse;
@@ -22,17 +24,22 @@ public class GameLiveService {
 	private final GameRepository gameRepository;
 	private final GameEventRepository gameEventRepository;
 	private final GameLiveEventHub hub;
+	private final PlayerRepository playerRepository;
 
-	public GameLiveService(GameRepository gameRepository, GameEventRepository gameEventRepository, GameLiveEventHub hub) {
+	public GameLiveService(
+			GameRepository gameRepository, GameEventRepository gameEventRepository, GameLiveEventHub hub,
+			PlayerRepository playerRepository) {
 		this.gameRepository = gameRepository;
 		this.gameEventRepository = gameEventRepository;
 		this.hub = hub;
+		this.playerRepository = playerRepository;
 	}
 
 	/** 관리자 진행 이벤트를 기록하고, 커밋 후 구독자에게 보낸다. */
 	public LiveEventResponse record(Long gameId, LiveEventCreateRequest request) {
 		Game game = gameRepository.findByIdForUpdate(gameId)
 				.orElseThrow(() -> new BusinessException(ErrorCode.GAME_NOT_FOUND));
+		Player player = findPlayerOf(game, request.playerId());
 		GameEventType type = request.type();
 		switch (type) {
 			case GAME_STARTED -> game.start();
@@ -44,7 +51,7 @@ public class GameLiveService {
 		}
 		GameEvent event = gameEventRepository.save(new GameEvent(
 				game, game.nextEventSeq(), type, game.getInning(), game.getHalf(),
-				game.getHomeScore(), game.getAwayScore()));
+				game.getHomeScore(), game.getAwayScore(), player, request.detail()));
 		LiveEventResponse response = LiveEventResponse.from(event);
 		hub.publishAfterCommit(gameId, response);
 		return response;
@@ -62,6 +69,25 @@ public class GameLiveService {
 		return gameEventRepository.findByGame_IdAndSeqGreaterThanOrderBySeqAsc(gameId, seq).stream()
 				.map(LiveEventResponse::from)
 				.toList();
+	}
+
+	/** 선수는 이 경기의 두 팀 중 한 팀 소속이어야 한다. */
+	private Player findPlayerOf(Game game, Long playerId) {
+		if (playerId == null) {
+			return null;
+		}
+		Player player = playerRepository.findById(playerId)
+				.orElseThrow(() -> new BusinessException(ErrorCode.PLAYER_NOT_FOUND));
+		if (!player.getTeamName().equals(game.getHomeTeam()) && !player.getTeamName().equals(game.getAwayTeam())) {
+			throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+		}
+		return player;
+	}
+
+	/** 재접속과 기록 화면을 위한 전체 로그(번호 순). */
+	@Transactional(readOnly = true)
+	public List<LiveEventResponse> allEvents(Long gameId) {
+		return eventsAfter(gameId, 0);
 	}
 
 	private Game findGame(Long gameId) {
