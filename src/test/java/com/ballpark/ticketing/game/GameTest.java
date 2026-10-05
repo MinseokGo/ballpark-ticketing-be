@@ -2,10 +2,8 @@ package com.ballpark.ticketing.game;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import com.ballpark.ticketing.common.exception.BusinessException;
 import com.ballpark.ticketing.common.exception.ErrorCode;
-
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 

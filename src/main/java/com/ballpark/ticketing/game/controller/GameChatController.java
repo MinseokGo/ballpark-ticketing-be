@@ -7,6 +7,7 @@ import com.ballpark.ticketing.game.live.GameChatHub;
 import com.ballpark.ticketing.game.service.GameChatService;
 import jakarta.validation.Valid;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,15 +22,11 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/games/{gameId}/chat")
+@RequiredArgsConstructor
 public class GameChatController {
 
 	private final GameChatService gameChatService;
 	private final GameChatHub hub;
-
-	public GameChatController(GameChatService gameChatService, GameChatHub hub) {
-		this.gameChatService = gameChatService;
-		this.hub = hub;
-	}
 
 	@GetMapping("/messages")
 	public List<ChatMessageResponse> recent(@PathVariable Long gameId) {

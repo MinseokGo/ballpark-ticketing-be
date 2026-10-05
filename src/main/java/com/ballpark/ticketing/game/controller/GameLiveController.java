@@ -6,6 +6,7 @@ import com.ballpark.ticketing.game.dto.LiveStateResponse;
 import com.ballpark.ticketing.game.live.GameLiveEventHub;
 import com.ballpark.ticketing.game.service.GameLiveService;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -16,15 +17,11 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/games/{gameId}/live")
+@RequiredArgsConstructor
 public class GameLiveController {
 
 	private final GameLiveService gameLiveService;
 	private final GameLiveEventHub hub;
-
-	public GameLiveController(GameLiveService gameLiveService, GameLiveEventHub hub) {
-		this.gameLiveService = gameLiveService;
-		this.hub = hub;
-	}
 
 	@GetMapping
 	public LiveStateResponse snapshot(@PathVariable Long gameId) {

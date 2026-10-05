@@ -11,25 +11,19 @@ import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.user.AppUser;
 import com.ballpark.ticketing.user.UserRepository;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class GameChatService {
 
 	private final GameRepository gameRepository;
 	private final GameChatMessageRepository messageRepository;
 	private final GameChatHub hub;
 	private final UserRepository userRepository;
-
-	public GameChatService(GameRepository gameRepository, GameChatMessageRepository messageRepository, GameChatHub hub,
-			UserRepository userRepository) {
-		this.gameRepository = gameRepository;
-		this.messageRepository = messageRepository;
-		this.hub = hub;
-		this.userRepository = userRepository;
-	}
 
 	public ChatMessageResponse post(Long gameId, Long userId, String content) {
 		Game game = findGame(gameId);

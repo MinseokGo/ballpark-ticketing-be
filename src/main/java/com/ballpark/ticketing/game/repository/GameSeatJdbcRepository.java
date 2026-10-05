@@ -1,6 +1,7 @@
 package com.ballpark.ticketing.game.repository;
 
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -8,6 +9,7 @@ import org.springframework.stereotype.Repository;
  * GameSeat도 IDENTITY 생성 전략이라 saveAll 배치가 적용되지 않는다. SeatJdbcRepository와 같은 이유.
  */
 @Repository
+@RequiredArgsConstructor
 public class GameSeatJdbcRepository {
 
 	private static final String INSERT_SQL =
@@ -15,10 +17,6 @@ public class GameSeatJdbcRepository {
 	private static final int BATCH_CHUNK_SIZE = 500;
 
 	private final JdbcTemplate jdbcTemplate;
-
-	public GameSeatJdbcRepository(JdbcTemplate jdbcTemplate) {
-		this.jdbcTemplate = jdbcTemplate;
-	}
 
 	public int batchInsert(Long gameId, List<Long> seatIds) {
 		if (seatIds.isEmpty()) {

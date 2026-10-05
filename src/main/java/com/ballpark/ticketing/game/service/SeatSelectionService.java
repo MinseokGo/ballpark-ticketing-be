@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import lombok.RequiredArgsConstructor;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
  * 예매를 잡지 않는다. 다른 사람에게 "지금 누가 보고 있다"를 보여 주기 위한 신호다.
  */
 @Service
+@RequiredArgsConstructor
 public class SeatSelectionService {
 
 	private static final Duration TTL = Duration.ofSeconds(30);
@@ -27,10 +29,6 @@ public class SeatSelectionService {
 
 	private final Map<Long, Map<Long, Selection>> byGame = new ConcurrentHashMap<>();
 	private final SeatStatusHub seatStatusHub;
-
-	public SeatSelectionService(SeatStatusHub seatStatusHub) {
-		this.seatStatusHub = seatStatusHub;
-	}
 
 	/** 사용자의 고르는 중 좌석을 바꾼다. 빈 목록이면 지운다. */
 	public void update(Long gameId, Long userId, List<Long> gameSeatIds) {

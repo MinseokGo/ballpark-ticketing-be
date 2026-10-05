@@ -13,24 +13,19 @@ import com.ballpark.ticketing.reservation.Reservation;
 import com.ballpark.ticketing.reservation.ReservationSeat;
 import com.ballpark.ticketing.reservation.ReservationStatus;
 import com.ballpark.ticketing.reservation.repository.ReservationRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class PaymentService {
 
 	private final ReservationRepository reservationRepository;
 	private final PaymentRepository paymentRepository;
 
 	private final SeatStatusHub seatStatusHub;
-
-	public PaymentService(ReservationRepository reservationRepository, PaymentRepository paymentRepository,
-			SeatStatusHub seatStatusHub) {
-		this.reservationRepository = reservationRepository;
-		this.paymentRepository = paymentRepository;
-		this.seatStatusHub = seatStatusHub;
-	}
 
 	/**
 	 * 실제 PG 연동 없는 Mock 결제. request.success()로 성공/실패를 바로 결정한다.

@@ -6,6 +6,7 @@ import com.ballpark.ticketing.user.dto.LoginRequest;
 import com.ballpark.ticketing.user.dto.SignupRequest;
 import com.ballpark.ticketing.user.dto.UserResponse;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -16,13 +17,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
 	private final AuthService authService;
-
-	public AuthController(AuthService authService) {
-		this.authService = authService;
-	}
 
 	@PostMapping("/signup")
 	@ResponseStatus(HttpStatus.CREATED)

@@ -5,6 +5,7 @@ import com.ballpark.ticketing.game.dto.SeatSelectionRequest;
 import com.ballpark.ticketing.game.live.SeatStatusHub;
 import com.ballpark.ticketing.game.service.SeatSelectionService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -18,15 +19,11 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 @RestController
 @RequestMapping("/api/games/{gameId}/seats")
+@RequiredArgsConstructor
 public class GameSeatStreamController {
 
 	private final SeatStatusHub seatStatusHub;
 	private final SeatSelectionService seatSelectionService;
-
-	public GameSeatStreamController(SeatStatusHub seatStatusHub, SeatSelectionService seatSelectionService) {
-		this.seatStatusHub = seatStatusHub;
-		this.seatSelectionService = seatSelectionService;
-	}
 
 	/** 좌석 상태 변경과 고르는 중 목록을 보내는 스트림. 연결하면 지금 목록을 먼저 받는다. */
 	@GetMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)

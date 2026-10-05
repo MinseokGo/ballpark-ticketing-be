@@ -7,6 +7,7 @@ import com.ballpark.ticketing.game.service.GameService;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.util.random.RandomGenerator;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
@@ -18,6 +19,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class DailyGameScheduler {
 
 	private final GameService gameService;
@@ -25,14 +27,6 @@ public class DailyGameScheduler {
 	private final DailyMatchupPlanner planner;
 	private final Clock clock;
 	private final RandomGenerator random = RandomGenerator.getDefault();
-
-	public DailyGameScheduler(GameService gameService, GameRepository gameRepository,
-			DailyMatchupPlanner planner, Clock clock) {
-		this.gameService = gameService;
-		this.gameRepository = gameRepository;
-		this.planner = planner;
-		this.clock = clock;
-	}
 
 	@Scheduled(cron = "0 0 0 * * *", zone = "Asia/Seoul")
 	public void createToday() {

@@ -1,7 +1,6 @@
 package com.ballpark.ticketing.common.seed;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import com.ballpark.ticketing.TestcontainersConfiguration;
 import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.repository.GameSeatRepository;

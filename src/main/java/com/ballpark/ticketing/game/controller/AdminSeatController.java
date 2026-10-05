@@ -4,6 +4,7 @@ import com.ballpark.ticketing.game.dto.SeatBulkCreateRequest;
 import com.ballpark.ticketing.game.dto.SeatBulkCreateResponse;
 import com.ballpark.ticketing.game.service.SeatService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -14,13 +15,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/admin/sections/{sectionId}/seats")
+@RequiredArgsConstructor
 public class AdminSeatController {
 
 	private final SeatService seatService;
-
-	public AdminSeatController(SeatService seatService) {
-		this.seatService = seatService;
-	}
 
 	@PostMapping
 	public ResponseEntity<SeatBulkCreateResponse> createSeats(

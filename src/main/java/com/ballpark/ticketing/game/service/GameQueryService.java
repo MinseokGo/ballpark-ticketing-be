@@ -12,6 +12,7 @@ import com.ballpark.ticketing.game.dto.SectionAvailabilityResponse;
 import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.repository.GameSeatRepository;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,15 +20,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional(readOnly = true)
+@RequiredArgsConstructor
 public class GameQueryService {
 
 	private final GameRepository gameRepository;
 	private final GameSeatRepository gameSeatRepository;
-
-	public GameQueryService(GameRepository gameRepository, GameSeatRepository gameSeatRepository) {
-		this.gameRepository = gameRepository;
-		this.gameSeatRepository = gameSeatRepository;
-	}
 
 	public PageResponse<GameSummaryResponse> listGames(Pageable pageable) {
 		return listGames(null, pageable);

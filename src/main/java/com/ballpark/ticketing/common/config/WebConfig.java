@@ -2,12 +2,13 @@ package com.ballpark.ticketing.common.config;
 
 import com.ballpark.ticketing.common.auth.LoginUserArgumentResolver;
 import com.ballpark.ticketing.user.JwtService;
-import org.springframework.beans.factory.ObjectProvider;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 /**
@@ -15,16 +16,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
  * 운영 오리진은 아직 없어 app.cors.allowed-origins로 환경별로 바꿀 수 있게만 둔다.
  */
 @Configuration
+@RequiredArgsConstructor
 public class WebConfig implements WebMvcConfigurer {
 
 	@Value("${app.cors.allowed-origins:http://localhost:5173}")
 	private String[] allowedOrigins;
 
 	private final ObjectProvider<JwtService> jwtService;
-
-	public WebConfig(ObjectProvider<JwtService> jwtService) {
-		this.jwtService = jwtService;
-	}
 
 	@Override
 	public void addCorsMappings(CorsRegistry registry) {
