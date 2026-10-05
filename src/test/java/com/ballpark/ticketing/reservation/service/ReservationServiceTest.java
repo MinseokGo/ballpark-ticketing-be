@@ -164,7 +164,7 @@ class ReservationServiceTest {
 		ReservationResponse created = reservationService.create(
 				game.id(), USER_ID, new ReservationCreateRequest(gameSeatIds));
 
-		ReservationResponse cancelled = reservationService.cancel(created.id());
+		ReservationResponse cancelled = reservationService.cancel(created.id(), USER_ID);
 
 		assertThat(cancelled.status().name()).isEqualTo("CANCELLED");
 		gameSeatIds.forEach(id ->
@@ -174,7 +174,7 @@ class ReservationServiceTest {
 
 	@Test
 	void rejectsCancellingAnUnknownReservation() {
-		assertThatThrownBy(() -> reservationService.cancel(999_999L))
+		assertThatThrownBy(() -> reservationService.cancel(999_999L, USER_ID))
 				.isInstanceOf(BusinessException.class)
 				.extracting(e -> ((BusinessException) e).getErrorCode())
 				.isEqualTo(ErrorCode.RESERVATION_NOT_FOUND);
@@ -186,9 +186,9 @@ class ReservationServiceTest {
 		List<Long> gameSeatIds = gameSeatIdsFor(game.id());
 		ReservationResponse created = reservationService.create(
 				game.id(), USER_ID, new ReservationCreateRequest(gameSeatIds));
-		reservationService.cancel(created.id());
+		reservationService.cancel(created.id(), USER_ID);
 
-		assertThatThrownBy(() -> reservationService.cancel(created.id()))
+		assertThatThrownBy(() -> reservationService.cancel(created.id(), USER_ID))
 				.isInstanceOf(BusinessException.class)
 				.extracting(e -> ((BusinessException) e).getErrorCode())
 				.isEqualTo(ErrorCode.RESERVATION_ALREADY_CANCELLED);
@@ -207,7 +207,7 @@ class ReservationServiceTest {
 		ReservationResponse reservation = reservationService.create(
 				game.id(), USER_ID, new ReservationCreateRequest(gameSeatIds));
 
-		ReservationResponse cancelled = reservationService.cancel(reservation.id());
+		ReservationResponse cancelled = reservationService.cancel(reservation.id(), USER_ID);
 
 		assertThat(cancelled.status()).isEqualTo(ReservationStatus.CANCELLED);
 		gameSeatIds.forEach(id ->
@@ -221,9 +221,9 @@ class ReservationServiceTest {
 		List<Long> gameSeatIds = gameSeatIdsFor(game.id());
 		ReservationResponse reservation = reservationService.create(
 				game.id(), USER_ID, new ReservationCreateRequest(gameSeatIds));
-		paymentService.pay(reservation.id(), new PaymentCreateRequest(true));
+		paymentService.pay(reservation.id(), USER_ID, new PaymentCreateRequest(true));
 
-		ReservationResponse cancelled = reservationService.cancel(reservation.id());
+		ReservationResponse cancelled = reservationService.cancel(reservation.id(), USER_ID);
 
 		assertThat(cancelled.status()).isEqualTo(ReservationStatus.CANCELLED);
 		assertThat(paymentRepository.findByReservation_IdAndStatus(reservation.id(), PaymentStatus.REFUNDED))
@@ -245,9 +245,9 @@ class ReservationServiceTest {
 		gameService.openTicketing(game.id());
 		ReservationResponse reservation = reservationService.create(
 				game.id(), USER_ID, new ReservationCreateRequest(gameSeatIdsFor(game.id())));
-		paymentService.pay(reservation.id(), new PaymentCreateRequest(true));
+		paymentService.pay(reservation.id(), USER_ID, new PaymentCreateRequest(true));
 
-		assertThatThrownBy(() -> reservationService.cancel(reservation.id()))
+		assertThatThrownBy(() -> reservationService.cancel(reservation.id(), USER_ID))
 				.isInstanceOf(BusinessException.class)
 				.extracting(e -> ((BusinessException) e).getErrorCode())
 				.isEqualTo(ErrorCode.RESERVATION_NOT_CANCELLABLE);

@@ -15,7 +15,7 @@ import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-/** 경기별 실시간 채팅 메시지. 사용자 식별은 X-User-Id 헤더를 그대로 저장한다(인증은 v1 범위 밖). */
+/** 경기별 실시간 채팅 메시지. 보낸 사람은 로그인 사용자 번호와 닉네임이다. */
 @Getter
 @Entity
 @Table(indexes = @Index(name = "idx_game_chat_game_id", columnList = "game_id, id"))
@@ -36,9 +36,14 @@ public class GameChatMessage extends BaseTimeEntity {
 	@Column(nullable = false, length = 200)
 	private String content;
 
-	public GameChatMessage(Game game, Long userId, String content) {
+	// 보낼 때의 닉네임을 같이 저장한다. 예전 메시지(닉네임 없음)는 null이다.
+	@Column(length = 20)
+	private String nickname;
+
+	public GameChatMessage(Game game, Long userId, String nickname, String content) {
 		this.game = game;
 		this.userId = userId;
+		this.nickname = nickname;
 		this.content = content;
 	}
 }

@@ -1,6 +1,7 @@
 package com.ballpark.ticketing.reservation.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -17,11 +18,15 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import com.ballpark.ticketing.common.auth.LoginUserArgumentResolver;
+import com.ballpark.ticketing.user.JwtService;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(ReservationController.class)
+@Import({LoginUserArgumentResolver.class, JwtService.class})
 class ReservationControllerTest {
 
 	@Autowired
@@ -30,6 +35,13 @@ class ReservationControllerTest {
 	@MockitoBean
 	private ReservationService reservationService;
 
+	@Autowired
+	private JwtService jwtService;
+
+	private String bearer() {
+		return "Bearer " + jwtService.issue(10L);
+	}
+
 	@Test
 	void createsAReservation() throws Exception {
 		ReservationResponse response = new ReservationResponse(
@@ -37,7 +49,7 @@ class ReservationControllerTest {
 		given(reservationService.create(eq(1L), eq(10L), any())).willReturn(response);
 
 		mockMvc.perform(post("/api/games/1/reservations")
-						.header("X-User-Id", "10")
+						.header("Authorization", bearer())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"gameSeatIds": [1, 2]}
@@ -48,20 +60,20 @@ class ReservationControllerTest {
 	}
 
 	@Test
-	void rejectsMissingUserIdHeader() throws Exception {
+	void rejectsARequestWithoutAToken() throws Exception {
 		mockMvc.perform(post("/api/games/1/reservations")
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"gameSeatIds": [1, 2]}
 								"""))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.code").value("COMMON-001"));
+				.andExpect(status().isUnauthorized())
+				.andExpect(jsonPath("$.code").value("AUTH-001"));
 	}
 
 	@Test
 	void rejectsMoreThanFourSeats() throws Exception {
 		mockMvc.perform(post("/api/games/1/reservations")
-						.header("X-User-Id", "10")
+						.header("Authorization", bearer())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"gameSeatIds": [1, 2, 3, 4, 5]}
@@ -76,7 +88,7 @@ class ReservationControllerTest {
 				.willThrow(new BusinessException(ErrorCode.GAME_NOT_OPEN));
 
 		mockMvc.perform(post("/api/games/1/reservations")
-						.header("X-User-Id", "10")
+						.header("Authorization", bearer())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"gameSeatIds": [1]}
@@ -89,9 +101,9 @@ class ReservationControllerTest {
 	void cancelsAReservation() throws Exception {
 		ReservationResponse response = new ReservationResponse(
 				1L, 10L, 1L, ReservationStatus.CANCELLED, 40_000, List.of(1L, 2L), LocalDateTime.now());
-		given(reservationService.cancel(1L)).willReturn(response);
+		given(reservationService.cancel(eq(1L), anyLong())).willReturn(response);
 
-		mockMvc.perform(post("/api/reservations/1/cancel"))
+		mockMvc.perform(post("/api/reservations/1/cancel").header("Authorization", bearer()))
 				.andExpect(status().isOk())
 				.andExpect(jsonPath("$.status").value("CANCELLED"));
 	}

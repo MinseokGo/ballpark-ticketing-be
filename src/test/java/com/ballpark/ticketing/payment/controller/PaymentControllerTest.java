@@ -1,6 +1,7 @@
 package com.ballpark.ticketing.payment.controller;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -16,11 +17,15 @@ import java.time.LocalDateTime;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
+import com.ballpark.ticketing.common.auth.LoginUserArgumentResolver;
+import com.ballpark.ticketing.user.JwtService;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(PaymentController.class)
+@Import({LoginUserArgumentResolver.class, JwtService.class})
 class PaymentControllerTest {
 
 	@Autowired
@@ -29,12 +34,20 @@ class PaymentControllerTest {
 	@MockitoBean
 	private PaymentService paymentService;
 
+	@Autowired
+	private JwtService jwtService;
+
+	private String bearer() {
+		return "Bearer " + jwtService.issue(10L);
+	}
+
 	@Test
 	void paysForAReservation() throws Exception {
-		given(paymentService.pay(eq(1L), any()))
+		given(paymentService.pay(eq(1L), anyLong(), any()))
 				.willReturn(new PaymentResponse(1L, 1L, 40_000, PaymentStatus.PAID, LocalDateTime.now()));
 
 		mockMvc.perform(post("/api/reservations/1/payments")
+						.header("Authorization", bearer())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"success": true}
@@ -46,6 +59,7 @@ class PaymentControllerTest {
 	@Test
 	void rejectsMissingSuccessField() throws Exception {
 		mockMvc.perform(post("/api/reservations/1/payments")
+						.header("Authorization", bearer())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("{}"))
 				.andExpect(status().isBadRequest())
@@ -54,10 +68,11 @@ class PaymentControllerTest {
 
 	@Test
 	void reservationNotPendingReturnsConflict() throws Exception {
-		given(paymentService.pay(eq(1L), any()))
+		given(paymentService.pay(eq(1L), anyLong(), any()))
 				.willThrow(new BusinessException(ErrorCode.RESERVATION_NOT_PENDING));
 
 		mockMvc.perform(post("/api/reservations/1/payments")
+						.header("Authorization", bearer())
 						.contentType(MediaType.APPLICATION_JSON)
 						.content("""
 								{"success": true}

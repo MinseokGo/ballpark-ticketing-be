@@ -7,12 +7,13 @@ public record ChatMessageResponse(
 		Long id,
 		Long gameId,
 		Long userId,
+		String nickname,
 		String content,
 		LocalDateTime createdAt) {
 
 	public static ChatMessageResponse from(GameChatMessage message) {
 		return new ChatMessageResponse(
-				message.getId(), message.getGame().getId(), message.getUserId(), message.getContent(),
+				message.getId(), message.getGame().getId(), message.getUserId(), message.getNickname(), message.getContent(),
 				message.getCreatedAt());
 	}
 }

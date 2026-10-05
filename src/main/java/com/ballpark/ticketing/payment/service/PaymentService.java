@@ -28,9 +28,12 @@ public class PaymentService {
 	 * 실제 PG 연동 없는 Mock 결제. request.success()로 성공/실패를 바로 결정한다.
 	 * 성공하면 예약을 확정하고 좌석을 판매 완료로 바꾼다. 실패해도 예약과 좌석은 그대로 둬 재시도할 수 있게 한다(DR-07).
 	 */
-	public PaymentResponse pay(Long reservationId, PaymentCreateRequest request) {
+	public PaymentResponse pay(Long reservationId, Long userId, PaymentCreateRequest request) {
 		Reservation reservation = reservationRepository.findById(reservationId)
 				.orElseThrow(() -> new BusinessException(ErrorCode.RESERVATION_NOT_FOUND));
+		if (!reservation.getUserId().equals(userId)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN);
+		}
 		if (reservation.getStatus() != ReservationStatus.PENDING) {
 			throw new BusinessException(ErrorCode.RESERVATION_NOT_PENDING);
 		}
