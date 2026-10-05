@@ -41,6 +41,7 @@ public enum ErrorCode {
 	GAME_ALREADY_ENDED(HttpStatus.CONFLICT, "GAME-007", "이미 종료되었거나 취소된 경기입니다."),
 	INNING_NOT_ADVANCED(HttpStatus.CONFLICT, "GAME-008", "이닝은 앞으로만 진행할 수 있습니다."),
 	SCORE_DECREASED(HttpStatus.CONFLICT, "GAME-009", "점수는 줄일 수 없습니다. 잘못 입력했다면 점수 정정 이벤트를 사용하세요."),
+	GAME_NOT_YET_STARTABLE(HttpStatus.CONFLICT, "GAME-010", "시작 시각이 되지 않은 경기는 중계를 시작할 수 없습니다."),
 
 	// 예약
 	RESERVATION_SEATS_EMPTY(HttpStatus.BAD_REQUEST, "RESERVATION-001", "예약할 좌석을 1개 이상 선택해야 합니다."),

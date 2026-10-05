@@ -41,3 +41,5 @@ spring:
 app:
   live-simulator:
     enabled: true
+    # 1.0이 실제 속도(경기 2~7시간). 시연할 때 5나 10으로 올리면 빠르게 돌아간다.
+    speed: 1.0

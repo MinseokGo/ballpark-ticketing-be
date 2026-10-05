@@ -64,6 +64,9 @@ public class Game {
 	@Column(nullable = false)
 	private int eventSeq;
 
+	// 예정 종료 시각. 일정 배치가 만든 경기에만 있다. 이 시각이 지나면 중계 생성기가 경기를 끝낸다.
+	private LocalDateTime plannedEndAt;
+
 	public Game(String homeTeam, String awayTeam, LocalDateTime startAt, LocalDateTime ticketOpenAt) {
 		if (!ticketOpenAt.isBefore(startAt)) {
 			throw new BusinessException(ErrorCode.INVALID_GAME_SCHEDULE);
@@ -94,16 +97,32 @@ public class Game {
 		return status == GameStatus.OPEN;
 	}
 
+	/** 예정 종료 시각을 정한다(일정 배치가 쓴다). */
+	public void planEnd(LocalDateTime plannedEndAt) {
+		this.plannedEndAt = plannedEndAt;
+	}
+
+	/** 예정 종료 시각이 있고 그 시각이 지났는지. */
+	public boolean isPastPlannedEnd(LocalDateTime now) {
+		return plannedEndAt != null && !now.isBefore(plannedEndAt);
+	}
+
 	/** 경기 시작 시각에 도달했는지. 확정 예약의 취소 가능 여부를 가른다. */
 	public boolean hasStarted(LocalDateTime now) {
 		return !now.isBefore(startAt);
 	}
 
-	public void start() {
+	/**
+	 * 시작 시각이 지난 뒤에만 시작한다. 예정 전에 중계가 올라가는 일을 여기서 막아서, 관리자 API든 생성기든 같은 규칙을 따른다.
+	 */
+	public void start(LocalDateTime now) {
 		if (progress == GameProgress.LIVE) {
 			throw new BusinessException(ErrorCode.GAME_ALREADY_STARTED);
 		}
 		requireNotEnded();
+		if (!hasStarted(now)) {
+			throw new BusinessException(ErrorCode.GAME_NOT_YET_STARTABLE);
+		}
 		this.progress = GameProgress.LIVE;
 		this.inning = 1;
 		this.half = Half.TOP;

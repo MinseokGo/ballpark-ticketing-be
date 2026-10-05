@@ -6,17 +6,13 @@ import com.ballpark.ticketing.game.GameProgress;
 import com.ballpark.ticketing.game.Player;
 import com.ballpark.ticketing.game.PlayKind;
 import com.ballpark.ticketing.game.Half;
-import com.ballpark.ticketing.game.dto.GameCreateRequest;
-import com.ballpark.ticketing.game.dto.GameResponse;
 import com.ballpark.ticketing.game.dto.LiveEventCreateRequest;
 import com.ballpark.ticketing.game.dto.LiveStateResponse;
 import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.repository.PlayerRepository;
 import com.ballpark.ticketing.game.service.GameLiveService;
-import com.ballpark.ticketing.game.service.GameService;
 import java.time.Clock;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.random.RandomGenerator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -36,14 +32,12 @@ import org.springframework.stereotype.Component;
 @Component
 public class LiveGameSimulator {
 
-	static final int TARGET_LIVE_GAMES = 3;
 	static final int FORCED_END_INNING = 12;
 	private static final int REGULAR_INNINGS = 9;
-	// 한 번 돌 때마다 대부분 이벤트가 하나씩 나오도록 확률을 잡는다(나머지 15%는 조용한 순간).
-	private static final double SCORE_PROBABILITY = 0.35;
-	private static final double HALF_INNING_END_PROBABILITY = 0.25;
-	private static final double PLAY_PROBABILITY = 0.30;
-	// 득점 기록에 붙는 플레이 종류(타격으로 난 득점)
+	// 2초마다 한 번 도는 기준으로 맞춘 실제 속도. 득점은 5~8분에 한 번, 이닝 교체는 10분 안팎, 플레이는 1~2분에 한 번꼴이다.
+	private static final double SCORE_PROBABILITY = 0.005;
+	private static final double HALF_INNING_END_PROBABILITY = 0.0033;
+	private static final double PLAY_PROBABILITY = 0.03;
 	private static final List<PlayKind> SCORING_PLAYS = List.of(
 			PlayKind.HIT, PlayKind.DOUBLE, PlayKind.HOME_RUN, PlayKind.SACRIFICE_FLY, PlayKind.WILD_PITCH);
 	// 득점 외 일반 플레이. 삼진·볼넷·병살·도루 등 기록 화면에서 보여준다.
@@ -55,34 +49,27 @@ public class LiveGameSimulator {
 	private static final java.util.Set<PlayKind> PITCHER_PLAYS = java.util.EnumSet.of(
 			PlayKind.STRIKEOUT, PlayKind.WALK, PlayKind.HIT_BY_PITCH, PlayKind.GROUND_OUT, PlayKind.FLY_OUT,
 			PlayKind.DOUBLE_PLAY);
-	private static final List<String[]> TEAM_PAIRS = List.of(
-			new String[] {"두산 베어스", "LG 트윈스"},
-			new String[] {"KIA 타이거즈", "삼성 라이온즈"},
-			new String[] {"SSG 랜더스", "롯데 자이언츠"},
-			new String[] {"한화 이글스", "NC 다이노스"},
-			new String[] {"KT 위즈", "키움 히어로즈"});
-
 	private final GameRepository gameRepository;
 	private final GameLiveService gameLiveService;
-	private final GameService gameService;
 	private final PlayerRepository playerRepository;
 	private final Clock clock;
 	private final boolean enabled;
+	private final double speed;
 	private final RandomGenerator random = RandomGenerator.getDefault();
 
 	public LiveGameSimulator(
 			GameRepository gameRepository,
 			GameLiveService gameLiveService,
-			GameService gameService,
 			PlayerRepository playerRepository,
 			Clock clock,
-			@Value("${app.live-simulator.enabled:false}") boolean enabled) {
+			@Value("${app.live-simulator.enabled:false}") boolean enabled,
+			@Value("${app.live-simulator.speed:1.0}") double speed) {
 		this.gameRepository = gameRepository;
 		this.gameLiveService = gameLiveService;
-		this.gameService = gameService;
 		this.playerRepository = playerRepository;
 		this.clock = clock;
 		this.enabled = enabled;
+		this.speed = speed;
 	}
 
 	@Scheduled(fixedDelay = 2_000)
@@ -92,12 +79,19 @@ public class LiveGameSimulator {
 		}
 	}
 
-	/** 한 번 돈다: 진행 중 경기가 모자라면 예정 경기를 시작하고, 각 진행 중 경기에 랜덤 이벤트를 하나씩 준다. */
+	/** 한 번 돈다: 시작 시각이 된 경기를 시작하고, 진행 중 경기마다 이벤트를 한 번 줄 수 있다. 예정 종료가 지나면 끝낸다. */
 	public void tick(RandomGenerator random) {
-		fillLiveGames();
+		LocalDateTime now = LocalDateTime.now(clock);
+		startDueGames(now);
 		for (Long gameId : liveGameIds()) {
 			try {
-				advance(gameLiveService.snapshot(gameId), random);
+				Game game = gameRepository.findById(gameId).orElseThrow();
+				LiveStateResponse state = gameLiveService.snapshot(gameId);
+				if (game.isPastPlannedEnd(now)) {
+					finish(state);
+				} else {
+					advance(state, random);
+				}
 			} catch (RuntimeException error) {
 				// 한 경기의 실패가 다른 경기 중계를 멈추지 않게 한다.
 				log.warn("[simulator] 경기 {} 이벤트 기록 실패: {}", gameId, error.getMessage());
@@ -105,43 +99,34 @@ public class LiveGameSimulator {
 		}
 	}
 
-	/**
-	 * 진행 중 경기가 모자라면 예정 경기를 시작한다. 예정 경기가 없으면 데모 경기를 새로 만들어 시작한다.
-	 * 그래서 경기가 끝나도 중계가 계속 이어진다.
-	 */
-	private void fillLiveGames() {
-		int missing = TARGET_LIVE_GAMES - liveGameIds().size();
-		if (missing <= 0) {
-			return;
-		}
-		List<Game> upcoming = gameRepository.findByProgress(GameProgress.NOT_STARTED,
-				PageRequest.of(0, missing, Sort.by("startAt"))).getContent();
-		for (int i = 0; i < missing; i++) {
-			Long gameId = i < upcoming.size() ? upcoming.get(i).getId() : createDemoGame(random).getId();
-			gameLiveService.record(gameId,
-					new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
-			log.info("[simulator] 경기 {} 시작", gameId);
-		}
+	/** 시작 시각이 지난 예정 경기를 시작한다. */
+	private void startDueGames(LocalDateTime now) {
+		gameRepository.findByProgress(GameProgress.NOT_STARTED, PageRequest.of(0, 50, Sort.by("startAt")))
+				.getContent()
+				.stream()
+				.filter(game -> !game.getStartAt().isAfter(now))
+				.forEach(game -> {
+					gameLiveService.record(game.getId(),
+							new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
+					log.info("[simulator] 경기 {} 시작", game.getId());
+				});
 	}
 
-	/** 예매 오픈 전 일정이 아니라, 이미 시작한 것으로 만든다. 데모용 팀 조합은 KBO 구단 이름을 쓴다(CLAUDE.md 테스트 절 예외). */
-	private Game createDemoGame(RandomGenerator random) {
-		String[] pair = TEAM_PAIRS.get(random.nextInt(TEAM_PAIRS.size()));
-		LocalDateTime startAt = LocalDateTime.now(clock).truncatedTo(ChronoUnit.MINUTES).minusMinutes(1);
-		GameResponse created = gameService.create(new GameCreateRequest(
-				pair[0], pair[1], startAt, startAt.minusDays(1)));
-		return gameRepository.findById(created.id()).orElseThrow();
+	private void finish(LiveStateResponse state) {
+		gameLiveService.record(state.gameId(),
+				new LiveEventCreateRequest(GameEventType.GAME_FINISHED, null, null, state.homeScore(), state.awayScore()));
+		log.info("[simulator] 경기 {} 종료 (예정 시각)", state.gameId());
 	}
 
 	/**
-	 * 중계를 돌리는 진행 중 경기. 예정 시각이 아직 오지 않은 경기는 뺀다.
-	 * 데이터 테스트용으로 미래 경기를 진행 중으로 두면, 이 생성기가 몇 분 안에 끝내 버리지 않게 하려는 것이다.
+	 * 생성기가 돌리는 진행 중 경기. 예정 종료 시각이 있는 일정 배치 경기만 본다.
+	 * 종료 시각이 없는 경기(관리자가 직접 만든 경기)는 관리자가 끝낼 때까지 자동으로 건드리지 않는다.
 	 */
 	private List<Long> liveGameIds() {
 		LocalDateTime now = LocalDateTime.now(clock);
 		return gameRepository.findByProgress(GameProgress.LIVE, Pageable.unpaged())
 				.stream()
-				.filter(game -> !game.getStartAt().isAfter(now))
+				.filter(game -> game.getPlannedEndAt() != null && !game.getStartAt().isAfter(now))
 				.map(Game::getId)
 				.toList();
 	}
@@ -151,11 +136,14 @@ public class LiveGameSimulator {
 			return;
 		}
 		double roll = random.nextDouble();
-		if (roll < SCORE_PROBABILITY) {
+		double score = SCORE_PROBABILITY * speed;
+		double half = score + HALF_INNING_END_PROBABILITY * speed;
+		double play = half + PLAY_PROBABILITY * speed;
+		if (roll < score) {
 			scoreOnce(state, random);
-		} else if (roll < SCORE_PROBABILITY + HALF_INNING_END_PROBABILITY) {
+		} else if (roll < half) {
 			endHalfInning(state);
-		} else if (roll < SCORE_PROBABILITY + HALF_INNING_END_PROBABILITY + PLAY_PROBABILITY) {
+		} else if (roll < play) {
 			playOnce(state, random);
 		}
 	}

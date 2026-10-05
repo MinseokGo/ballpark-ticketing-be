@@ -18,9 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 public class PlayerRosterSeeder implements ApplicationRunner {
 
-	static final List<String> TEAMS = List.of(
-			"두산 베어스", "LG 트윈스", "KIA 타이거즈", "삼성 라이온즈", "SSG 랜더스",
-			"롯데 자이언츠", "한화 이글스", "NC 다이노스", "KT 위즈", "키움 히어로즈");
+	static final List<String> TEAMS = com.ballpark.ticketing.game.schedule.KboTeams.NAMES;
 	private static final int PLAYERS_PER_TEAM = 14;
 	private static final List<String> SURNAMES = List.of(
 			"가", "고", "남", "도", "류", "문", "백", "서", "신", "오", "전", "채", "추", "하");

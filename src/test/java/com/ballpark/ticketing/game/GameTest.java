@@ -20,6 +20,17 @@ class GameTest {
 	}
 
 	@Test
+	void cannotStartBeforeStartAt() {
+		Game game = new Game("Seoul Comets", "Busan Gulls",
+				LocalDateTime.of(2026, 10, 10, 18, 30), LocalDateTime.of(2026, 10, 3, 11, 0));
+
+		assertThatThrownBy(() -> game.start(LocalDateTime.of(2026, 10, 10, 18, 29)))
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode").isEqualTo(ErrorCode.GAME_NOT_YET_STARTABLE);
+		assertThat(game.getProgress()).isEqualTo(GameProgress.NOT_STARTED);
+	}
+
+	@Test
 	void startedAtAndAfterStartAt() {
 		assertThat(game.hasStarted(LocalDateTime.of(2026, 10, 10, 18, 30))).isTrue();
 		assertThat(game.hasStarted(LocalDateTime.of(2026, 10, 11, 0, 0))).isTrue();
@@ -28,7 +39,7 @@ class GameTest {
 	private Game liveGame() {
 		Game game = new Game("Seoul Comets", "Busan Gulls",
 				LocalDateTime.of(2026, 10, 10, 18, 30), LocalDateTime.of(2026, 10, 3, 11, 0));
-		game.start();
+		game.start(LocalDateTime.of(2026, 10, 10, 18, 30));
 		return game;
 	}
 
@@ -39,7 +50,7 @@ class GameTest {
 		assertThat(game.getProgress()).isEqualTo(GameProgress.LIVE);
 		assertThat(game.getInning()).isEqualTo(1);
 		assertThat(game.getHalf()).isEqualTo(Half.TOP);
-		assertThatThrownBy(game::start)
+		assertThatThrownBy(() -> game.start(LocalDateTime.of(2026, 10, 10, 18, 30)))
 				.isInstanceOf(BusinessException.class)
 				.extracting("errorCode").isEqualTo(ErrorCode.GAME_ALREADY_STARTED);
 	}

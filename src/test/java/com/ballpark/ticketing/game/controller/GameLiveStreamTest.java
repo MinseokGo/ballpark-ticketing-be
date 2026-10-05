@@ -47,7 +47,7 @@ class GameLiveStreamTest {
 	private long finishedGameWithTwoEvents() {
 		GameResponse game = gameService.create(new GameCreateRequest(
 				"Seoul Comets", "Busan Gulls",
-				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0)));
+				LocalDateTime.of(2020, 11, 1, 18, 30), LocalDateTime.of(2020, 10, 25, 11, 0)));
 		gameLiveService.record(game.id(), new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
 		gameLiveService.record(game.id(), new LiveEventCreateRequest(GameEventType.GAME_FINISHED, null, null, 3, 2));
 		return game.id();

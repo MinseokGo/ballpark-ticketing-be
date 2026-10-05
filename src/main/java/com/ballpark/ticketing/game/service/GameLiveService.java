@@ -14,6 +14,8 @@ import com.ballpark.ticketing.game.dto.LiveStateResponse;
 import com.ballpark.ticketing.game.live.GameLiveEventHub;
 import com.ballpark.ticketing.game.repository.GameEventRepository;
 import com.ballpark.ticketing.game.repository.GameRepository;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,10 +28,12 @@ public class GameLiveService {
 	private final GameEventRepository gameEventRepository;
 	private final GameLiveEventHub hub;
 	private final PlayerRepository playerRepository;
+	private final Clock clock;
 
 	public GameLiveService(
 			GameRepository gameRepository, GameEventRepository gameEventRepository, GameLiveEventHub hub,
-			PlayerRepository playerRepository) {
+			PlayerRepository playerRepository, Clock clock) {
+		this.clock = clock;
 		this.gameRepository = gameRepository;
 		this.gameEventRepository = gameEventRepository;
 		this.hub = hub;
@@ -45,7 +49,7 @@ public class GameLiveService {
 		GameEventType type = request.type();
 		validateDetail(type, request.detail(), player);
 		switch (type) {
-			case GAME_STARTED -> game.start();
+			case GAME_STARTED -> game.start(LocalDateTime.now(clock));
 			case INNING_CHANGED -> game.changeInning(required(request.inning()), required(request.half()));
 			case SCORE_CHANGED -> game.advanceScore(required(request.homeScore()), required(request.awayScore()));
 			case SCORE_CORRECTED -> game.correctScore(required(request.homeScore()), required(request.awayScore()));
