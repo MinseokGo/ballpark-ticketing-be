@@ -8,6 +8,8 @@ import com.ballpark.ticketing.game.dto.LiveEventCreateRequest;
 import com.ballpark.ticketing.game.dto.LiveStateResponse;
 import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.service.GameLiveService;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.random.RandomGenerator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -35,15 +37,18 @@ public class LiveGameSimulator {
 
 	private final GameRepository gameRepository;
 	private final GameLiveService gameLiveService;
+	private final Clock clock;
 	private final boolean enabled;
 	private final RandomGenerator random = RandomGenerator.getDefault();
 
 	public LiveGameSimulator(
 			GameRepository gameRepository,
 			GameLiveService gameLiveService,
+			Clock clock,
 			@Value("${app.live-simulator.enabled:false}") boolean enabled) {
 		this.gameRepository = gameRepository;
 		this.gameLiveService = gameLiveService;
+		this.clock = clock;
 		this.enabled = enabled;
 	}
 
@@ -81,9 +86,15 @@ public class LiveGameSimulator {
 				});
 	}
 
+	/**
+	 * 중계를 돌리는 진행 중 경기. 예정 시각이 아직 오지 않은 경기는 뺀다.
+	 * 데이터 테스트용으로 미래 경기를 진행 중으로 두면, 이 생성기가 몇 분 안에 끝내 버리지 않게 하려는 것이다.
+	 */
 	private List<Long> liveGameIds() {
+		LocalDateTime now = LocalDateTime.now(clock);
 		return gameRepository.findByProgress(GameProgress.LIVE, Pageable.unpaged())
 				.stream()
+				.filter(game -> !game.getStartAt().isAfter(now))
 				.map(Game::getId)
 				.toList();
 	}

@@ -38,7 +38,7 @@ class LiveGameSimulatorTest {
 	void keepsRandomEventsFlowingAndNeverBreaksTheRules() {
 		GameResponse game = gameService.create(new GameCreateRequest(
 				"Seoul Comets", "Busan Gulls",
-				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0)));
+				LocalDateTime.of(2026, 10, 1, 18, 30), LocalDateTime.of(2026, 9, 25, 11, 0)));
 		gameLiveService.record(game.id(), new LiveEventCreateRequest(
 				GameEventType.GAME_STARTED, null, null, null, null));
 
@@ -53,5 +53,21 @@ class LiveGameSimulatorTest {
 		assertThat(gameLiveService.eventsAfter(game.id(), 0))
 				.extracting(event -> event.seq())
 				.isSorted();
+	}
+
+	@Test
+	void leavesAGameAloneUntilItsStartTimeHasPassed() {
+		GameResponse game = gameService.create(new GameCreateRequest(
+				"NC Dinos", "KT Wiz",
+				LocalDateTime.of(2027, 10, 5, 18, 30), LocalDateTime.of(2027, 9, 1, 11, 0)));
+		gameLiveService.record(game.id(), new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
+
+		RandomGenerator random = RandomGenerator.of("L64X128MixRandom");
+		for (int i = 0; i < 100; i++) {
+			simulator.tick(random);
+		}
+
+		assertThat(gameLiveService.snapshot(game.id()).seq()).isEqualTo(1);
+		assertThat(gameLiveService.snapshot(game.id()).progress()).isEqualTo(GameProgress.LIVE);
 	}
 }
