@@ -87,7 +87,7 @@ API를 추가할 때는 도메인 패키지 안에 controller, service, reposito
 - 스타터가 모듈화됐다 (`spring-boot-starter-webmvc`, 각 스타터의 `-test` 모듈). Boot 3 블로그 예제의 의존성 이름과 다를 수 있다.
 - Jackson 3의 패키지는 `tools.jackson.*` (어노테이션은 `com.fasterxml.jackson.annotation` 유지).
 - `@Nullable`은 `org.jspecify.annotations.Nullable`.
-- Hibernate 7은 MySQL에서 `EnumType.STRING` 컬럼을 네이티브 `enum` 타입으로 만든다. v1에서는 `preferred_enum_jdbc_type: VARCHAR`로 `varchar`를 쓴다 (#3, 상태 값 추가 시 `ALTER` 불필요).
+- Hibernate 7은 MySQL에서 `EnumType.STRING` 컬럼을 네이티브 `enum` 타입으로 만든다. 모든 enum 필드에 `@JdbcTypeCode(SqlTypes.VARCHAR)`를 붙여 `varchar`로 만든다. 전역 설정은 Hibernate 7에 없다 (#3, 상태 값 추가 시 `ALTER` 불필요).
 - 시각은 `TimeConfig`의 `Clock`(Asia/Seoul)으로만 읽는다. 감사 시각(`createdAt`)과 경기 시작 판정이 같은 기준을 쓴다 (#6).
 
 ## Git / GitHub 규칙

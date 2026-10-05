@@ -8,10 +8,6 @@ spring:
     properties:
       hibernate:
         format_sql: true
-        # 상태 enum을 MySQL 네이티브 enum이 아니라 varchar로 만든다(ISSUE-03). 상태 값을 추가할 때마다
-        # ALTER TABLE이 필요하던 문제를 없앤다.
-        type:
-          preferred_enum_jdbc_type: VARCHAR
   data:
     web:
       pageable:
