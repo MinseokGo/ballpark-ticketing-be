@@ -1,6 +1,7 @@
 package com.ballpark.ticketing.game.controller;
 
 import com.ballpark.ticketing.common.dto.PageResponse;
+import com.ballpark.ticketing.game.GameProgress;
 import com.ballpark.ticketing.game.dto.GameResponse;
 import com.ballpark.ticketing.game.dto.GameSummaryResponse;
 import com.ballpark.ticketing.game.dto.SeatMapItemResponse;
@@ -11,6 +12,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -26,8 +28,9 @@ public class GameController {
 
 	@GetMapping
 	public PageResponse<GameSummaryResponse> getGames(
+			@RequestParam(required = false) GameProgress progress,
 			@PageableDefault(size = 20, sort = "startAt") Pageable pageable) {
-		return gameQueryService.listGames(pageable);
+		return gameQueryService.listGames(progress, pageable);
 	}
 
 	@GetMapping("/{gameId}")

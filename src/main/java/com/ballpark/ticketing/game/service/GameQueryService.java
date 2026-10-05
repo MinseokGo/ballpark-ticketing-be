@@ -4,6 +4,7 @@ import com.ballpark.ticketing.common.dto.PageResponse;
 import com.ballpark.ticketing.common.exception.BusinessException;
 import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.Game;
+import com.ballpark.ticketing.game.GameProgress;
 import com.ballpark.ticketing.game.dto.GameResponse;
 import com.ballpark.ticketing.game.dto.GameSummaryResponse;
 import com.ballpark.ticketing.game.dto.SeatMapItemResponse;
@@ -29,8 +30,14 @@ public class GameQueryService {
 	}
 
 	public PageResponse<GameSummaryResponse> listGames(Pageable pageable) {
-		Page<GameSummaryResponse> page = gameRepository.findAll(pageable).map(GameSummaryResponse::from);
-		return PageResponse.from(page);
+		return listGames(null, pageable);
+	}
+
+	public PageResponse<GameSummaryResponse> listGames(GameProgress progress, Pageable pageable) {
+		Page<Game> games = progress == null
+				? gameRepository.findAll(pageable)
+				: gameRepository.findByProgress(progress, pageable);
+		return PageResponse.from(games.map(GameSummaryResponse::from));
 	}
 
 	public GameResponse getGame(Long gameId) {

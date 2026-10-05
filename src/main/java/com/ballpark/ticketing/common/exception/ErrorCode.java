@@ -29,6 +29,11 @@ public enum ErrorCode {
 	GAME_NOT_SCHEDULED(HttpStatus.CONFLICT, "GAME-002", "예정 상태의 경기만 예매를 오픈할 수 있습니다."),
 	GAME_NOT_OPEN(HttpStatus.CONFLICT, "GAME-003", "예매가 오픈된 경기가 아닙니다."),
 	GAME_NOT_FOUND(HttpStatus.NOT_FOUND, "GAME-004", "존재하지 않는 경기입니다."),
+	GAME_NOT_LIVE(HttpStatus.CONFLICT, "GAME-005", "진행 중인 경기가 아닙니다."),
+	GAME_ALREADY_STARTED(HttpStatus.CONFLICT, "GAME-006", "이미 시작된 경기입니다."),
+	GAME_ALREADY_ENDED(HttpStatus.CONFLICT, "GAME-007", "이미 종료되었거나 취소된 경기입니다."),
+	INNING_NOT_ADVANCED(HttpStatus.CONFLICT, "GAME-008", "이닝은 앞으로만 진행할 수 있습니다."),
+	SCORE_DECREASED(HttpStatus.CONFLICT, "GAME-009", "점수는 줄일 수 없습니다. 잘못 입력했다면 점수 정정 이벤트를 사용하세요."),
 
 	// 예약
 	RESERVATION_SEATS_EMPTY(HttpStatus.BAD_REQUEST, "RESERVATION-001", "예약할 좌석을 1개 이상 선택해야 합니다."),

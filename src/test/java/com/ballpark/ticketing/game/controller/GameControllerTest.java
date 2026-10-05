@@ -39,7 +39,7 @@ class GameControllerTest {
 		Game game = new Game("Seoul Comets", "Busan Gulls",
 				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0));
 		GameSummaryResponse summary = GameSummaryResponse.from(game);
-		given(gameQueryService.listGames(any())).willReturn(new PageResponse<>(List.of(summary), 0, 20, 1, 1));
+		given(gameQueryService.listGames(any(), any())).willReturn(new PageResponse<>(List.of(summary), 0, 20, 1, 1));
 
 		mockMvc.perform(get("/api/games"))
 				.andExpect(status().isOk())
