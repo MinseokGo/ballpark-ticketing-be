@@ -4,12 +4,16 @@ import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameEventType;
 import com.ballpark.ticketing.game.GameProgress;
 import com.ballpark.ticketing.game.Half;
+import com.ballpark.ticketing.game.dto.GameCreateRequest;
+import com.ballpark.ticketing.game.dto.GameResponse;
 import com.ballpark.ticketing.game.dto.LiveEventCreateRequest;
 import com.ballpark.ticketing.game.dto.LiveStateResponse;
 import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.service.GameLiveService;
+import com.ballpark.ticketing.game.service.GameService;
 import java.time.Clock;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.random.RandomGenerator;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -32,11 +36,19 @@ public class LiveGameSimulator {
 	static final int TARGET_LIVE_GAMES = 3;
 	static final int FORCED_END_INNING = 12;
 	private static final int REGULAR_INNINGS = 9;
-	private static final double SCORE_PROBABILITY = 0.30;
-	private static final double HALF_INNING_END_PROBABILITY = 0.10;
+	// 한 번 돌 때마다 대부분 이벤트가 하나씩 나오도록 확률을 잡는다(나머지 15%는 조용한 순간).
+	private static final double SCORE_PROBABILITY = 0.50;
+	private static final double HALF_INNING_END_PROBABILITY = 0.35;
+	private static final List<String[]> TEAM_PAIRS = List.of(
+			new String[] {"두산 베어스", "LG 트윈스"},
+			new String[] {"KIA 타이거즈", "삼성 라이온즈"},
+			new String[] {"SSG 랜더스", "롯데 자이언츠"},
+			new String[] {"한화 이글스", "NC 다이노스"},
+			new String[] {"KT 위즈", "키움 히어로즈"});
 
 	private final GameRepository gameRepository;
 	private final GameLiveService gameLiveService;
+	private final GameService gameService;
 	private final Clock clock;
 	private final boolean enabled;
 	private final RandomGenerator random = RandomGenerator.getDefault();
@@ -44,15 +56,17 @@ public class LiveGameSimulator {
 	public LiveGameSimulator(
 			GameRepository gameRepository,
 			GameLiveService gameLiveService,
+			GameService gameService,
 			Clock clock,
 			@Value("${app.live-simulator.enabled:false}") boolean enabled) {
 		this.gameRepository = gameRepository;
 		this.gameLiveService = gameLiveService;
+		this.gameService = gameService;
 		this.clock = clock;
 		this.enabled = enabled;
 	}
 
-	@Scheduled(fixedDelay = 3_000)
+	@Scheduled(fixedDelay = 2_000)
 	public void scheduledTick() {
 		if (enabled) {
 			tick(random);
@@ -72,18 +86,32 @@ public class LiveGameSimulator {
 		}
 	}
 
+	/**
+	 * 진행 중 경기가 모자라면 예정 경기를 시작한다. 예정 경기가 없으면 데모 경기를 새로 만들어 시작한다.
+	 * 그래서 경기가 끝나도 중계가 계속 이어진다.
+	 */
 	private void fillLiveGames() {
 		int missing = TARGET_LIVE_GAMES - liveGameIds().size();
 		if (missing <= 0) {
 			return;
 		}
-		gameRepository.findByProgress(GameProgress.NOT_STARTED,
-						PageRequest.of(0, missing, Sort.by("startAt")))
-				.forEach(game -> {
-					gameLiveService.record(game.getId(),
-							new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
-					log.info("[simulator] 경기 {} 시작", game.getId());
-				});
+		List<Game> upcoming = gameRepository.findByProgress(GameProgress.NOT_STARTED,
+				PageRequest.of(0, missing, Sort.by("startAt"))).getContent();
+		for (int i = 0; i < missing; i++) {
+			Long gameId = i < upcoming.size() ? upcoming.get(i).getId() : createDemoGame(random).getId();
+			gameLiveService.record(gameId,
+					new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
+			log.info("[simulator] 경기 {} 시작", gameId);
+		}
+	}
+
+	/** 예매 오픈 전 일정이 아니라, 이미 시작한 것으로 만든다. 데모용 팀 조합은 KBO 구단 이름을 쓴다(CLAUDE.md 테스트 절 예외). */
+	private Game createDemoGame(RandomGenerator random) {
+		String[] pair = TEAM_PAIRS.get(random.nextInt(TEAM_PAIRS.size()));
+		LocalDateTime startAt = LocalDateTime.now(clock).truncatedTo(ChronoUnit.MINUTES).minusMinutes(1);
+		GameResponse created = gameService.create(new GameCreateRequest(
+				pair[0], pair[1], startAt, startAt.minusDays(1)));
+		return gameRepository.findById(created.id()).orElseThrow();
 	}
 
 	/**
