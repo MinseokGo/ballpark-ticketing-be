@@ -62,6 +62,14 @@ public class GameSeat {
 		this.status = GameSeatStatus.SOLD;
 	}
 
+	/** 환불 시 판매 완료 좌석을 다시 판매 가능으로 돌린다. */
+	public void refund() {
+		if (status != GameSeatStatus.SOLD) {
+			throw new BusinessException(ErrorCode.SEAT_NOT_SOLD);
+		}
+		this.status = GameSeatStatus.AVAILABLE;
+	}
+
 	public void release() {
 		if (status == GameSeatStatus.AVAILABLE) {
 			throw new BusinessException(ErrorCode.SEAT_ALREADY_AVAILABLE);

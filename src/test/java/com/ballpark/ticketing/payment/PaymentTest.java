@@ -58,4 +58,23 @@ class PaymentTest {
 				.isInstanceOf(BusinessException.class)
 				.extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_NOT_PENDING);
 	}
+
+	@Test
+	void refundsAPaidPayment() {
+		Payment payment = new Payment(reservation, 30_000);
+		payment.complete();
+
+		payment.refund();
+
+		assertThat(payment.getStatus()).isEqualTo(PaymentStatus.REFUNDED);
+	}
+
+	@Test
+	void rejectsRefundingAPaymentThatIsNotPaid() {
+		Payment payment = new Payment(reservation, 30_000);
+
+		assertThatThrownBy(payment::refund)
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode").isEqualTo(ErrorCode.PAYMENT_NOT_PAID);
+	}
 }

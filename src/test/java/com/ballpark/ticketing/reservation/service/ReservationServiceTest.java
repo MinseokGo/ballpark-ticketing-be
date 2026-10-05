@@ -12,10 +12,16 @@ import com.ballpark.ticketing.game.Section;
 import com.ballpark.ticketing.game.dto.GameCreateRequest;
 import com.ballpark.ticketing.game.dto.GameResponse;
 import com.ballpark.ticketing.game.dto.SeatBulkCreateRequest;
+import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.repository.GameSeatRepository;
 import com.ballpark.ticketing.game.repository.SectionRepository;
 import com.ballpark.ticketing.game.service.GameService;
 import com.ballpark.ticketing.game.service.SeatService;
+import com.ballpark.ticketing.payment.PaymentStatus;
+import com.ballpark.ticketing.payment.dto.PaymentCreateRequest;
+import com.ballpark.ticketing.payment.repository.PaymentRepository;
+import com.ballpark.ticketing.payment.service.PaymentService;
+import com.ballpark.ticketing.reservation.ReservationStatus;
 import com.ballpark.ticketing.reservation.dto.ReservationCreateRequest;
 import com.ballpark.ticketing.reservation.dto.ReservationResponse;
 import java.time.LocalDateTime;
@@ -186,5 +192,65 @@ class ReservationServiceTest {
 				.isInstanceOf(BusinessException.class)
 				.extracting(e -> ((BusinessException) e).getErrorCode())
 				.isEqualTo(ErrorCode.RESERVATION_ALREADY_CANCELLED);
+	}
+
+	@Autowired
+	private PaymentService paymentService;
+
+	@Autowired
+	private PaymentRepository paymentRepository;
+
+	@Test
+	void cancellingAPendingReservationReleasesTheHeldSeats() {
+		GameResponse game = createOpenGameWithSeats(1, 2);
+		List<Long> gameSeatIds = gameSeatIdsFor(game.id());
+		ReservationResponse reservation = reservationService.create(
+				game.id(), USER_ID, new ReservationCreateRequest(gameSeatIds));
+
+		ReservationResponse cancelled = reservationService.cancel(reservation.id());
+
+		assertThat(cancelled.status()).isEqualTo(ReservationStatus.CANCELLED);
+		gameSeatIds.forEach(id ->
+				assertThat(gameSeatRepository.findById(id).orElseThrow().getStatus())
+						.isEqualTo(GameSeatStatus.AVAILABLE));
+	}
+
+	@Test
+	void cancellingAConfirmedReservationRefundsThePaymentAndFreesTheSeats() {
+		GameResponse game = createOpenGameWithSeats(1, 2);
+		List<Long> gameSeatIds = gameSeatIdsFor(game.id());
+		ReservationResponse reservation = reservationService.create(
+				game.id(), USER_ID, new ReservationCreateRequest(gameSeatIds));
+		paymentService.pay(reservation.id(), new PaymentCreateRequest(true));
+
+		ReservationResponse cancelled = reservationService.cancel(reservation.id());
+
+		assertThat(cancelled.status()).isEqualTo(ReservationStatus.CANCELLED);
+		assertThat(paymentRepository.findByReservation_IdAndStatus(reservation.id(), PaymentStatus.REFUNDED))
+				.hasSize(1);
+		assertThat(paymentRepository.findByReservation_IdAndStatus(reservation.id(), PaymentStatus.PAID)).isEmpty();
+		gameSeatIds.forEach(id ->
+				assertThat(gameSeatRepository.findById(id).orElseThrow().getStatus())
+						.isEqualTo(GameSeatStatus.AVAILABLE));
+	}
+
+	@Test
+	void rejectsCancellingAConfirmedReservationAfterTheGameStarted() {
+		// 이미 시작한 경기(과거 일정)라 확정 예약 취소가 막혀야 한다.
+		Section section = sectionRepository.save(new Section("Infield 703", "R", 20_000));
+		seatService.createBulk(section.getId(), new SeatBulkCreateRequest(1, 1));
+		GameResponse game = gameService.create(new GameCreateRequest(
+				"Seoul Comets", "Busan Gulls",
+				LocalDateTime.of(2020, 1, 2, 18, 30), LocalDateTime.of(2020, 1, 1, 11, 0)));
+		gameService.openTicketing(game.id());
+		ReservationResponse reservation = reservationService.create(
+				game.id(), USER_ID, new ReservationCreateRequest(gameSeatIdsFor(game.id())));
+		paymentService.pay(reservation.id(), new PaymentCreateRequest(true));
+
+		assertThatThrownBy(() -> reservationService.cancel(reservation.id()))
+				.isInstanceOf(BusinessException.class)
+				.extracting(e -> ((BusinessException) e).getErrorCode())
+				.isEqualTo(ErrorCode.RESERVATION_NOT_CANCELLABLE);
+		assertThat(paymentRepository.findByReservation_IdAndStatus(reservation.id(), PaymentStatus.PAID)).hasSize(1);
 	}
 }

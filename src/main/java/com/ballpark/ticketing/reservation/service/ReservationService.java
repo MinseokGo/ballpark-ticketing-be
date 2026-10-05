@@ -6,11 +6,17 @@ import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameSeat;
 import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.repository.GameSeatRepository;
+import com.ballpark.ticketing.payment.Payment;
+import com.ballpark.ticketing.payment.PaymentStatus;
+import com.ballpark.ticketing.payment.repository.PaymentRepository;
 import com.ballpark.ticketing.reservation.Reservation;
+import com.ballpark.ticketing.reservation.ReservationStatus;
 import com.ballpark.ticketing.reservation.dto.ReservationCreateRequest;
 import com.ballpark.ticketing.reservation.dto.ReservationResponse;
 import com.ballpark.ticketing.reservation.repository.ReservationRepository;
 import com.ballpark.ticketing.reservation.repository.ReservationSeatRepository;
+import java.time.Clock;
+import java.time.LocalDateTime;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -25,14 +31,19 @@ public class ReservationService {
 	private final GameSeatRepository gameSeatRepository;
 	private final ReservationRepository reservationRepository;
 	private final ReservationSeatRepository reservationSeatRepository;
+	private final PaymentRepository paymentRepository;
+	private final Clock clock;
 
 	public ReservationService(
 			GameRepository gameRepository, GameSeatRepository gameSeatRepository,
-			ReservationRepository reservationRepository, ReservationSeatRepository reservationSeatRepository) {
+			ReservationRepository reservationRepository, ReservationSeatRepository reservationSeatRepository,
+			PaymentRepository paymentRepository, Clock clock) {
 		this.gameRepository = gameRepository;
 		this.gameSeatRepository = gameSeatRepository;
 		this.reservationRepository = reservationRepository;
 		this.reservationSeatRepository = reservationSeatRepository;
+		this.paymentRepository = paymentRepository;
+		this.clock = clock;
 	}
 
 	public ReservationResponse create(Long gameId, Long userId, ReservationCreateRequest request) {
@@ -66,10 +77,24 @@ public class ReservationService {
 		return ReservationResponse.from(reservation);
 	}
 
+	/**
+	 * 결제 대기 예약은 좌석 선점만 풀고, 확정 예약은 결제를 전액 환불하고 좌석을 다시 판매 가능으로 돌린다.
+	 * 확정 예약은 경기 시작 전까지만 취소할 수 있다(시작 후에는 환불 정책이 없다).
+	 */
 	public ReservationResponse cancel(Long reservationId) {
 		Reservation reservation = findReservation(reservationId);
-		reservation.cancel();
-		reservation.getReservationSeats().forEach(reservationSeat -> reservationSeat.getGameSeat().release());
+		if (reservation.getStatus() == ReservationStatus.CONFIRMED) {
+			if (reservation.getGame().hasStarted(LocalDateTime.now(clock))) {
+				throw new BusinessException(ErrorCode.RESERVATION_NOT_CANCELLABLE);
+			}
+			reservation.cancel();
+			paymentRepository.findByReservation_IdAndStatus(reservationId, PaymentStatus.PAID)
+					.forEach(Payment::refund);
+			reservation.getReservationSeats().forEach(reservationSeat -> reservationSeat.getGameSeat().refund());
+		} else {
+			reservation.cancel();
+			reservation.getReservationSeats().forEach(reservationSeat -> reservationSeat.getGameSeat().release());
+		}
 		return ReservationResponse.from(reservation);
 	}
 

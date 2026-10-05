@@ -67,4 +67,9 @@ public class Game {
 	public boolean isOpen() {
 		return status == GameStatus.OPEN;
 	}
+
+	/** 경기 시작 시각에 도달했는지. 확정 예약의 취소 가능 여부를 가른다. */
+	public boolean hasStarted(LocalDateTime now) {
+		return !now.isBefore(startAt);
+	}
 }
