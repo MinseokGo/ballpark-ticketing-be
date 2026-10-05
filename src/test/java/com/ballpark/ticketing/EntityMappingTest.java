@@ -2,7 +2,6 @@ package com.ballpark.ticketing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import com.ballpark.ticketing.common.config.JpaAuditingConfig;
 import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameSeat;

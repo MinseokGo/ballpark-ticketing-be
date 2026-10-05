@@ -2,7 +2,6 @@ package com.ballpark.ticketing.payment;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import com.ballpark.ticketing.common.exception.BusinessException;
 import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.Game;

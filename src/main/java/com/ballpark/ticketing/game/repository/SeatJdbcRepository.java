@@ -2,6 +2,7 @@ package com.ballpark.ticketing.game.repository;
 
 import com.ballpark.ticketing.game.SeatPosition;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 
@@ -10,16 +11,13 @@ import org.springframework.stereotype.Repository;
  * 대량 등록에서는 JdbcTemplate.batchUpdate로 우회한다. docs/experiments/v1-02-admin-bulk-insert.md 참고.
  */
 @Repository
+@RequiredArgsConstructor
 public class SeatJdbcRepository {
 
 	private static final String INSERT_SQL = "INSERT INTO seat (section_id, row_no, seat_no) VALUES (?, ?, ?)";
 	private static final int BATCH_CHUNK_SIZE = 500;
 
 	private final JdbcTemplate jdbcTemplate;
-
-	public SeatJdbcRepository(JdbcTemplate jdbcTemplate) {
-		this.jdbcTemplate = jdbcTemplate;
-	}
 
 	public int batchInsert(Long sectionId, List<SeatPosition> positions) {
 		if (positions.isEmpty()) {

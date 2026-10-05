@@ -4,6 +4,7 @@ import com.ballpark.ticketing.game.dto.SectionCreateRequest;
 import com.ballpark.ticketing.game.dto.SectionResponse;
 import com.ballpark.ticketing.game.service.SectionService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -13,13 +14,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/admin/sections")
+@RequiredArgsConstructor
 public class AdminSectionController {
 
 	private final SectionService sectionService;
-
-	public AdminSectionController(SectionService sectionService) {
-		this.sectionService = sectionService;
-	}
 
 	@PostMapping
 	public ResponseEntity<SectionResponse> createSection(@Valid @RequestBody SectionCreateRequest request) {

@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -28,6 +29,7 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @Profile("seed")
+@RequiredArgsConstructor
 public class DemoDataSeeder implements ApplicationRunner {
 
 	private static final String[] TIERS = {"A", "B", "C"};
@@ -37,15 +39,6 @@ public class DemoDataSeeder implements ApplicationRunner {
 	private final SectionService sectionService;
 	private final SeatService seatService;
 	private final GameService gameService;
-
-	public DemoDataSeeder(
-			SectionRepository sectionRepository, SectionService sectionService,
-			SeatService seatService, GameService gameService) {
-		this.sectionRepository = sectionRepository;
-		this.sectionService = sectionService;
-		this.seatService = seatService;
-		this.gameService = gameService;
-	}
 
 	@Override
 	public void run(ApplicationArguments args) {

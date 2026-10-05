@@ -4,10 +4,10 @@ import com.ballpark.ticketing.common.exception.BusinessException;
 import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameSeat;
-import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.GameSeatStatus;
 import com.ballpark.ticketing.game.dto.SeatStatusResponse;
 import com.ballpark.ticketing.game.live.SeatStatusHub;
+import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.repository.GameSeatRepository;
 import com.ballpark.ticketing.payment.Payment;
 import com.ballpark.ticketing.payment.PaymentStatus;
@@ -15,19 +15,21 @@ import com.ballpark.ticketing.payment.repository.PaymentRepository;
 import com.ballpark.ticketing.reservation.Reservation;
 import com.ballpark.ticketing.reservation.ReservationSeat;
 import com.ballpark.ticketing.reservation.ReservationStatus;
-import com.ballpark.ticketing.reservation.dto.ReservationCreateRequest;
 import com.ballpark.ticketing.reservation.dto.MyReservationResponse;
+import com.ballpark.ticketing.reservation.dto.ReservationCreateRequest;
 import com.ballpark.ticketing.reservation.dto.ReservationResponse;
 import com.ballpark.ticketing.reservation.repository.ReservationRepository;
 import com.ballpark.ticketing.reservation.repository.ReservationSeatRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class ReservationService {
 
 	private static final int MAX_SEATS_PER_USER_PER_GAME = 4;
@@ -39,19 +41,6 @@ public class ReservationService {
 	private final PaymentRepository paymentRepository;
 	private final Clock clock;
 	private final SeatStatusHub seatStatusHub;
-
-	public ReservationService(
-			GameRepository gameRepository, GameSeatRepository gameSeatRepository,
-			ReservationRepository reservationRepository, ReservationSeatRepository reservationSeatRepository,
-			PaymentRepository paymentRepository, Clock clock, SeatStatusHub seatStatusHub) {
-		this.seatStatusHub = seatStatusHub;
-		this.gameRepository = gameRepository;
-		this.gameSeatRepository = gameSeatRepository;
-		this.reservationRepository = reservationRepository;
-		this.reservationSeatRepository = reservationSeatRepository;
-		this.paymentRepository = paymentRepository;
-		this.clock = clock;
-	}
 
 	public ReservationResponse create(Long gameId, Long userId, ReservationCreateRequest request) {
 		Game game = gameRepository.findById(gameId).orElseThrow(() -> new BusinessException(ErrorCode.GAME_NOT_FOUND));

@@ -10,26 +10,19 @@ import com.ballpark.ticketing.game.repository.GameSeatJdbcRepository;
 import com.ballpark.ticketing.game.repository.GameSeatRepository;
 import com.ballpark.ticketing.game.repository.SeatRepository;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class GameService {
 
 	private final GameRepository gameRepository;
 	private final SeatRepository seatRepository;
 	private final GameSeatRepository gameSeatRepository;
 	private final GameSeatJdbcRepository gameSeatJdbcRepository;
-
-	public GameService(
-			GameRepository gameRepository, SeatRepository seatRepository, GameSeatRepository gameSeatRepository,
-			GameSeatJdbcRepository gameSeatJdbcRepository) {
-		this.gameRepository = gameRepository;
-		this.seatRepository = seatRepository;
-		this.gameSeatRepository = gameSeatRepository;
-		this.gameSeatJdbcRepository = gameSeatJdbcRepository;
-	}
 
 	/**
 	 * 경기를 등록하고, 등록된 모든 좌석에 대해 경기별 좌석(GameSeat)을 AVAILABLE 상태로 일괄 생성한다.

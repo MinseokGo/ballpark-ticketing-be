@@ -6,18 +6,16 @@ import com.ballpark.ticketing.game.Section;
 import com.ballpark.ticketing.game.dto.SectionCreateRequest;
 import com.ballpark.ticketing.game.dto.SectionResponse;
 import com.ballpark.ticketing.game.repository.SectionRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class SectionService {
 
 	private final SectionRepository sectionRepository;
-
-	public SectionService(SectionRepository sectionRepository) {
-		this.sectionRepository = sectionRepository;
-	}
 
 	public SectionResponse create(SectionCreateRequest request) {
 		if (sectionRepository.existsByName(request.name())) {

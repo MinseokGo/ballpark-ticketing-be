@@ -5,23 +5,25 @@ import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameEvent;
 import com.ballpark.ticketing.game.GameEventType;
-import com.ballpark.ticketing.game.Player;
 import com.ballpark.ticketing.game.PlayKind;
-import com.ballpark.ticketing.game.repository.PlayerRepository;
+import com.ballpark.ticketing.game.Player;
 import com.ballpark.ticketing.game.dto.LiveEventCreateRequest;
 import com.ballpark.ticketing.game.dto.LiveEventResponse;
 import com.ballpark.ticketing.game.dto.LiveStateResponse;
 import com.ballpark.ticketing.game.live.GameLiveEventHub;
 import com.ballpark.ticketing.game.repository.GameEventRepository;
 import com.ballpark.ticketing.game.repository.GameRepository;
+import com.ballpark.ticketing.game.repository.PlayerRepository;
 import java.time.Clock;
 import java.time.LocalDateTime;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class GameLiveService {
 
 	private final GameRepository gameRepository;
@@ -29,16 +31,6 @@ public class GameLiveService {
 	private final GameLiveEventHub hub;
 	private final PlayerRepository playerRepository;
 	private final Clock clock;
-
-	public GameLiveService(
-			GameRepository gameRepository, GameEventRepository gameEventRepository, GameLiveEventHub hub,
-			PlayerRepository playerRepository, Clock clock) {
-		this.clock = clock;
-		this.gameRepository = gameRepository;
-		this.gameEventRepository = gameEventRepository;
-		this.hub = hub;
-		this.playerRepository = playerRepository;
-	}
 
 	/** 관리자 진행 이벤트를 기록하고, 커밋 후 구독자에게 보낸다. */
 	public LiveEventResponse record(Long gameId, LiveEventCreateRequest request) {

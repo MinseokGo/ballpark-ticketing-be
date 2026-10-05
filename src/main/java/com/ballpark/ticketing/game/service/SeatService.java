@@ -9,20 +9,17 @@ import com.ballpark.ticketing.game.repository.SeatJdbcRepository;
 import com.ballpark.ticketing.game.repository.SectionRepository;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class SeatService {
 
 	private final SectionRepository sectionRepository;
 	private final SeatJdbcRepository seatJdbcRepository;
-
-	public SeatService(SectionRepository sectionRepository, SeatJdbcRepository seatJdbcRepository) {
-		this.sectionRepository = sectionRepository;
-		this.seatJdbcRepository = seatJdbcRepository;
-	}
 
 	public SeatBulkCreateResponse createBulk(Long sectionId, SeatBulkCreateRequest request) {
 		if (!sectionRepository.existsById(sectionId)) {

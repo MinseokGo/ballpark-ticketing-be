@@ -2,10 +2,9 @@ package com.ballpark.ticketing.game.simulator;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
-import com.ballpark.ticketing.common.exception.ErrorCode;
-import com.ballpark.ticketing.common.exception.BusinessException;
 import com.ballpark.ticketing.TestcontainersConfiguration;
+import com.ballpark.ticketing.common.exception.BusinessException;
+import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.GameEventType;
 import com.ballpark.ticketing.game.GameProgress;
 import com.ballpark.ticketing.game.dto.GameCreateRequest;
@@ -14,8 +13,8 @@ import com.ballpark.ticketing.game.dto.LiveEventCreateRequest;
 import com.ballpark.ticketing.game.repository.GameRepository;
 import com.ballpark.ticketing.game.service.GameLiveService;
 import com.ballpark.ticketing.game.service.GameService;
-import java.util.random.RandomGenerator;
 import java.time.LocalDateTime;
+import java.util.random.RandomGenerator;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

@@ -6,7 +6,6 @@ import static org.mockito.BDDMockito.given;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 import com.ballpark.ticketing.common.exception.BusinessException;
 import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.dto.SeatBulkCreateResponse;

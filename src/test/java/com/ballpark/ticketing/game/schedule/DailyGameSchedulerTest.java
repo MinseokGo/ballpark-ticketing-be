@@ -1,7 +1,6 @@
 package com.ballpark.ticketing.game.schedule;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import com.ballpark.ticketing.TestcontainersConfiguration;
 import java.time.LocalDate;
 import org.junit.jupiter.api.Test;

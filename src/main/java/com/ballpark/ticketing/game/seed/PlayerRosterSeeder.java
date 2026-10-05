@@ -4,6 +4,7 @@ import com.ballpark.ticketing.game.Player;
 import com.ballpark.ticketing.game.repository.PlayerRepository;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class PlayerRosterSeeder implements ApplicationRunner {
 
 	static final List<String> TEAMS = com.ballpark.ticketing.game.schedule.KboTeams.NAMES;
@@ -28,10 +30,6 @@ public class PlayerRosterSeeder implements ApplicationRunner {
 			"투수", "투수", "투수", "포수", "내야수", "내야수", "내야수", "내야수", "외야수", "외야수", "외야수", "지명타자", "내야수", "외야수");
 
 	private final PlayerRepository playerRepository;
-
-	public PlayerRosterSeeder(PlayerRepository playerRepository) {
-		this.playerRepository = playerRepository;
-	}
 
 	@Override
 	@Transactional

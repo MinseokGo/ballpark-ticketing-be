@@ -2,7 +2,6 @@ package com.ballpark.ticketing.reservation.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import com.ballpark.ticketing.TestcontainersConfiguration;
 import com.ballpark.ticketing.common.exception.BusinessException;
 import com.ballpark.ticketing.common.exception.ErrorCode;

@@ -4,6 +4,7 @@ import com.ballpark.ticketing.game.dto.GameCreateRequest;
 import com.ballpark.ticketing.game.dto.GameResponse;
 import com.ballpark.ticketing.game.service.GameService;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PatchMapping;
@@ -15,13 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/admin/games")
+@RequiredArgsConstructor
 public class AdminGameController {
 
 	private final GameService gameService;
-
-	public AdminGameController(GameService gameService) {
-		this.gameService = gameService;
-	}
 
 	@PostMapping
 	public ResponseEntity<GameResponse> createGame(@Valid @RequestBody GameCreateRequest request) {

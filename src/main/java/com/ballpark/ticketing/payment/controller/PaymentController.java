@@ -1,10 +1,11 @@
 package com.ballpark.ticketing.payment.controller;
 
+import com.ballpark.ticketing.common.auth.LoginUser;
 import com.ballpark.ticketing.payment.dto.PaymentCreateRequest;
 import com.ballpark.ticketing.payment.dto.PaymentResponse;
 import com.ballpark.ticketing.payment.service.PaymentService;
 import jakarta.validation.Valid;
-import com.ballpark.ticketing.common.auth.LoginUser;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -15,13 +16,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/reservations/{reservationId}/payments")
+@RequiredArgsConstructor
 public class PaymentController {
 
 	private final PaymentService paymentService;
-
-	public PaymentController(PaymentService paymentService) {
-		this.paymentService = paymentService;
-	}
 
 	@PostMapping
 	public ResponseEntity<PaymentResponse> pay(

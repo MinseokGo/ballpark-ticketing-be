@@ -3,6 +3,7 @@ package com.ballpark.ticketing.game.schedule;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
@@ -17,15 +18,11 @@ import org.springframework.stereotype.Component;
 @Slf4j
 @Component
 @Profile("!test")
+@RequiredArgsConstructor
 public class DailyGameStartupRunner implements ApplicationRunner {
 
 	private final DailyGameScheduler scheduler;
 	private final Clock clock;
-
-	public DailyGameStartupRunner(DailyGameScheduler scheduler, Clock clock) {
-		this.scheduler = scheduler;
-		this.clock = clock;
-	}
 
 	@Override
 	public void run(ApplicationArguments args) {

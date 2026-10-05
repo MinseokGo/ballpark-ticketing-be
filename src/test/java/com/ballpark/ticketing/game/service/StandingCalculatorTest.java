@@ -1,7 +1,6 @@
 package com.ballpark.ticketing.game.service;
 
 import static org.assertj.core.api.Assertions.assertThat;
-
 import com.ballpark.ticketing.game.dto.FinishedGameResult;
 import com.ballpark.ticketing.game.dto.StandingResponse;
 import java.util.List;
