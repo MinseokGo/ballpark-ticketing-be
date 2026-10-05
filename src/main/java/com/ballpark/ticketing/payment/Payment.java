@@ -57,4 +57,12 @@ public class Payment extends BaseTimeEntity {
 		}
 		this.status = PaymentStatus.FAILED;
 	}
+
+	/** Mock 결제라 환불은 항상 전액이다. 부분 환불은 v1 범위 밖이다. */
+	public void refund() {
+		if (status != PaymentStatus.PAID) {
+			throw new BusinessException(ErrorCode.PAYMENT_NOT_PAID);
+		}
+		this.status = PaymentStatus.REFUNDED;
+	}
 }

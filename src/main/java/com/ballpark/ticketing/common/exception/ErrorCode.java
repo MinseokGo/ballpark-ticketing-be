@@ -22,6 +22,7 @@ public enum ErrorCode {
 	SECTION_NOT_FOUND(HttpStatus.NOT_FOUND, "SEAT-005", "존재하지 않는 구역입니다."),
 	SECTION_NAME_DUPLICATE(HttpStatus.CONFLICT, "SEAT-006", "이미 존재하는 구역 이름입니다."),
 	GAME_SEAT_NOT_FOUND(HttpStatus.NOT_FOUND, "SEAT-007", "존재하지 않는 좌석입니다."),
+	SEAT_NOT_SOLD(HttpStatus.CONFLICT, "SEAT-008", "판매 완료된 좌석만 환불할 수 있습니다."),
 
 	// 경기
 	INVALID_GAME_SCHEDULE(HttpStatus.BAD_REQUEST, "GAME-001", "예매 오픈 시각은 경기 시작 시각보다 이전이어야 합니다."),
@@ -36,9 +37,11 @@ public enum ErrorCode {
 	SEAT_GAME_MISMATCH(HttpStatus.BAD_REQUEST, "RESERVATION-004", "선택한 좌석이 예약 대상 경기의 좌석이 아닙니다."),
 	TICKET_LIMIT_EXCEEDED(HttpStatus.CONFLICT, "RESERVATION-005", "한 사용자가 한 경기에서 예약할 수 있는 좌석은 최대 4매입니다."),
 	RESERVATION_NOT_FOUND(HttpStatus.NOT_FOUND, "RESERVATION-006", "존재하지 않는 예약입니다."),
+	RESERVATION_NOT_CANCELLABLE(HttpStatus.CONFLICT, "RESERVATION-007", "경기 시작 이후에는 예약을 취소할 수 없습니다."),
 
 	// 결제
-	PAYMENT_NOT_PENDING(HttpStatus.CONFLICT, "PAYMENT-001", "대기 상태의 결제만 처리할 수 있습니다.");
+	PAYMENT_NOT_PENDING(HttpStatus.CONFLICT, "PAYMENT-001", "대기 상태의 결제만 처리할 수 있습니다."),
+	PAYMENT_NOT_PAID(HttpStatus.CONFLICT, "PAYMENT-002", "결제 완료 상태에서만 환불할 수 있습니다.");
 
 	private final HttpStatus status;
 	private final String code;

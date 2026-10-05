@@ -21,6 +21,8 @@ com.ballpark.ticketing
 
 ## Configuration notes
 
+- Status columns (`game`, `game_seat`, `reservation`, `payment`) are `varchar(20)`, not MySQL native `enum`: `preferred_enum_jdbc_type: VARCHAR` in `application.yml`. Adding a status value does not need an `ALTER TABLE` (ISSUE-03).
+- Times are Korean local time (`Asia/Seoul`). Every timestamp reads from the `Clock` bean in `TimeConfig`, not the JVM or DB default, so the server's time zone does not change stored values (ISSUE-06).
 - `spring.jpa.open-in-view: false`: lazy loading only happens inside a transaction, so an entity is never lazily loaded from a controller or during JSON serialization, and a DB connection is not held for the whole request.
 
 ## Admin API
@@ -56,7 +58,7 @@ single `join` query (`GameSeatRepository`), so each endpoint runs exactly one SQ
 |---|---|---|
 | `POST` | `/api/games/{gameId}/reservations` | Body `{ "gameSeatIds": [...] }` (1–4 seats), header `X-User-Id`. Holds each seat and creates a `PENDING` reservation. |
 | `POST` | `/api/reservations/{reservationId}/payments` | Body `{ "success": true\|false }` — mock payment, no real PG. `true` confirms the reservation and sells the seats; `false` just marks the payment `FAILED` so the reservation stays `PENDING` and can be retried. |
-| `POST` | `/api/reservations/{reservationId}/cancel` | Cancels the reservation and releases its seats back to `AVAILABLE`. Refunding a paid reservation is out of scope for v1 (#5). |
+| `POST` | `/api/reservations/{reservationId}/cancel` | Pending reservation: cancels it and releases its held seats. Confirmed reservation: refunds the payment in full (mock, `PAID` → `REFUNDED`), cancels it, and sets its seats back to `AVAILABLE`. Confirmed reservations can only be cancelled before the game starts (`RESERVATION-007` otherwise). |
 | `PATCH` | `/api/admin/games/{gameId}/open` | Admin: `SCHEDULED` → `OPEN`. Needed before any reservation can be made against that game. |
 
 Rules enforced in `ReservationService`:

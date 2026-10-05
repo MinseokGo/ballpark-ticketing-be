@@ -52,4 +52,25 @@ class GameSeatTest {
 
 		assertThat(gameSeat.getStatus()).isEqualTo(GameSeatStatus.AVAILABLE);
 	}
+
+	@Test
+	void refundsASoldSeatBackToAvailable() {
+		GameSeat gameSeat = new GameSeat(game, seat);
+		gameSeat.hold();
+		gameSeat.sell();
+
+		gameSeat.refund();
+
+		assertThat(gameSeat.getStatus()).isEqualTo(GameSeatStatus.AVAILABLE);
+	}
+
+	@Test
+	void rejectsRefundingASeatThatIsNotSold() {
+		GameSeat gameSeat = new GameSeat(game, seat);
+		gameSeat.hold();
+
+		assertThatThrownBy(gameSeat::refund)
+				.isInstanceOf(BusinessException.class)
+				.extracting("errorCode").isEqualTo(ErrorCode.SEAT_NOT_SOLD);
+	}
 }
