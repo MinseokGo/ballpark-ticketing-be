@@ -5,11 +5,15 @@ import com.ballpark.ticketing.common.exception.ErrorCode;
 import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameSeat;
 import com.ballpark.ticketing.game.repository.GameRepository;
+import com.ballpark.ticketing.game.GameSeatStatus;
+import com.ballpark.ticketing.game.dto.SeatStatusResponse;
+import com.ballpark.ticketing.game.live.SeatStatusHub;
 import com.ballpark.ticketing.game.repository.GameSeatRepository;
 import com.ballpark.ticketing.payment.Payment;
 import com.ballpark.ticketing.payment.PaymentStatus;
 import com.ballpark.ticketing.payment.repository.PaymentRepository;
 import com.ballpark.ticketing.reservation.Reservation;
+import com.ballpark.ticketing.reservation.ReservationSeat;
 import com.ballpark.ticketing.reservation.ReservationStatus;
 import com.ballpark.ticketing.reservation.dto.ReservationCreateRequest;
 import com.ballpark.ticketing.reservation.dto.MyReservationResponse;
@@ -34,11 +38,13 @@ public class ReservationService {
 	private final ReservationSeatRepository reservationSeatRepository;
 	private final PaymentRepository paymentRepository;
 	private final Clock clock;
+	private final SeatStatusHub seatStatusHub;
 
 	public ReservationService(
 			GameRepository gameRepository, GameSeatRepository gameSeatRepository,
 			ReservationRepository reservationRepository, ReservationSeatRepository reservationSeatRepository,
-			PaymentRepository paymentRepository, Clock clock) {
+			PaymentRepository paymentRepository, Clock clock, SeatStatusHub seatStatusHub) {
+		this.seatStatusHub = seatStatusHub;
 		this.gameRepository = gameRepository;
 		this.gameSeatRepository = gameSeatRepository;
 		this.reservationRepository = reservationRepository;
@@ -70,6 +76,7 @@ public class ReservationService {
 		}
 
 		gameSeats.forEach(GameSeat::hold);
+		seatStatusHub.publishAfterCommit(gameId, SeatStatusResponse.of(gameSeats, GameSeatStatus.HELD));
 		long totalPrice = gameSeats.stream()
 				.mapToLong(gameSeat -> gameSeat.getSeat().getSection().getPrice())
 				.sum();
@@ -100,6 +107,9 @@ public class ReservationService {
 			reservation.cancel();
 			reservation.getReservationSeats().forEach(reservationSeat -> reservationSeat.getGameSeat().release());
 		}
+		seatStatusHub.publishAfterCommit(reservation.getGame().getId(),
+				SeatStatusResponse.of(reservation.getReservationSeats().stream().map(ReservationSeat::getGameSeat).toList(),
+						GameSeatStatus.AVAILABLE));
 		return ReservationResponse.from(reservation);
 	}
 
