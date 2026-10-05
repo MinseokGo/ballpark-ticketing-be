@@ -14,6 +14,7 @@ import com.ballpark.ticketing.game.dto.GameResponse;
 import com.ballpark.ticketing.game.dto.LiveEventCreateRequest;
 import com.ballpark.ticketing.game.dto.LiveEventResponse;
 import com.ballpark.ticketing.game.dto.LiveStateResponse;
+import com.ballpark.ticketing.game.repository.PlayerRepository;
 import java.time.LocalDateTime;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -34,6 +35,9 @@ class GameLiveServiceTest {
 
 	@Autowired
 	private GameLiveService gameLiveService;
+
+	@Autowired
+	private PlayerRepository playerRepository;
 
 	private GameResponse createGame() {
 		return gameService.create(new GameCreateRequest(
@@ -104,5 +108,41 @@ class GameLiveServiceTest {
 				.isInstanceOf(BusinessException.class)
 				.extracting(e -> ((BusinessException) e).getErrorCode())
 				.isEqualTo(ErrorCode.GAME_NOT_FOUND);
+	}
+
+	private Long rosterPlayerId(String team) {
+		return playerRepository.findByTeamNameOrderByBackNumberAsc(team).get(0).getId();
+	}
+
+	@Test
+	void recordsAPlayWithItsPlayerAndKind() {
+		GameResponse game = gameService.create(new GameCreateRequest(
+				"두산 베어스", "LG 트윈스",
+				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0)));
+		gameLiveService.record(game.id(), new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
+		Long batter = rosterPlayerId("두산 베어스");
+		Long pitcher = rosterPlayerId("LG 트윈스");
+
+		LiveEventResponse play = gameLiveService.record(game.id(), new LiveEventCreateRequest(
+				GameEventType.PLAY, null, null, null, null, batter, "STRIKEOUT", pitcher));
+
+		assertThat(play.detail()).isEqualTo("STRIKEOUT");
+		assertThat(play.playerId()).isEqualTo(batter);
+		assertThat(play.secondaryPlayerId()).isEqualTo(pitcher);
+	}
+
+	@Test
+	void rejectsAPlayWithoutAKnownKind() {
+		GameResponse game = gameService.create(new GameCreateRequest(
+				"두산 베어스", "LG 트윈스",
+				LocalDateTime.of(2026, 11, 1, 18, 30), LocalDateTime.of(2026, 10, 25, 11, 0)));
+		gameLiveService.record(game.id(), new LiveEventCreateRequest(GameEventType.GAME_STARTED, null, null, null, null));
+		Long batter = rosterPlayerId("두산 베어스");
+
+		assertThatThrownBy(() -> gameLiveService.record(game.id(), new LiveEventCreateRequest(
+				GameEventType.PLAY, null, null, null, null, batter, "NOT_A_PLAY", null)))
+				.isInstanceOf(BusinessException.class)
+				.extracting(e -> ((BusinessException) e).getErrorCode())
+				.isEqualTo(ErrorCode.INVALID_INPUT_VALUE);
 	}
 }

@@ -4,6 +4,7 @@ import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameEventType;
 import com.ballpark.ticketing.game.GameProgress;
 import com.ballpark.ticketing.game.Player;
+import com.ballpark.ticketing.game.PlayKind;
 import com.ballpark.ticketing.game.Half;
 import com.ballpark.ticketing.game.dto.GameCreateRequest;
 import com.ballpark.ticketing.game.dto.GameResponse;
@@ -39,9 +40,21 @@ public class LiveGameSimulator {
 	static final int FORCED_END_INNING = 12;
 	private static final int REGULAR_INNINGS = 9;
 	// 한 번 돌 때마다 대부분 이벤트가 하나씩 나오도록 확률을 잡는다(나머지 15%는 조용한 순간).
-	private static final double SCORE_PROBABILITY = 0.50;
-	private static final double HALF_INNING_END_PROBABILITY = 0.35;
-	private static final List<String> DETAILS = List.of("안타", "2루타", "홈런", "희생플라이", "밀어내기", "폭투");
+	private static final double SCORE_PROBABILITY = 0.35;
+	private static final double HALF_INNING_END_PROBABILITY = 0.25;
+	private static final double PLAY_PROBABILITY = 0.30;
+	// 득점 기록에 붙는 플레이 종류(타격으로 난 득점)
+	private static final List<PlayKind> SCORING_PLAYS = List.of(
+			PlayKind.HIT, PlayKind.DOUBLE, PlayKind.HOME_RUN, PlayKind.SACRIFICE_FLY, PlayKind.WILD_PITCH);
+	// 득점 외 일반 플레이. 삼진·볼넷·병살·도루 등 기록 화면에서 보여준다.
+	private static final List<PlayKind> PLAYS = List.of(
+			PlayKind.STRIKEOUT, PlayKind.STRIKEOUT, PlayKind.WALK, PlayKind.GROUND_OUT, PlayKind.FLY_OUT,
+			PlayKind.DOUBLE_PLAY, PlayKind.STOLEN_BASE, PlayKind.CAUGHT_STEALING, PlayKind.HIT_BY_PITCH,
+			PlayKind.ERROR, PlayKind.HIT, PlayKind.DOUBLE);
+	// 투수가 함께 기록되는 플레이
+	private static final java.util.Set<PlayKind> PITCHER_PLAYS = java.util.EnumSet.of(
+			PlayKind.STRIKEOUT, PlayKind.WALK, PlayKind.HIT_BY_PITCH, PlayKind.GROUND_OUT, PlayKind.FLY_OUT,
+			PlayKind.DOUBLE_PLAY);
 	private static final List<String[]> TEAM_PAIRS = List.of(
 			new String[] {"두산 베어스", "LG 트윈스"},
 			new String[] {"KIA 타이거즈", "삼성 라이온즈"},
@@ -142,6 +155,8 @@ public class LiveGameSimulator {
 			scoreOnce(state, random);
 		} else if (roll < SCORE_PROBABILITY + HALF_INNING_END_PROBABILITY) {
 			endHalfInning(state);
+		} else if (roll < SCORE_PROBABILITY + HALF_INNING_END_PROBABILITY + PLAY_PROBABILITY) {
+			playOnce(state, random);
 		}
 	}
 
@@ -154,9 +169,31 @@ public class LiveGameSimulator {
 		String battingTeam = homeBatting ? game.getHomeTeam() : game.getAwayTeam();
 		List<Player> roster = playerRepository.findByTeamNameOrderByBackNumberAsc(battingTeam);
 		Long playerId = roster.isEmpty() ? null : roster.get(random.nextInt(roster.size())).getId();
-		String detail = DETAILS.get(random.nextInt(DETAILS.size()));
+		String detail = SCORING_PLAYS.get(random.nextInt(SCORING_PLAYS.size())).name();
 		gameLiveService.record(state.gameId(),
 				new LiveEventCreateRequest(GameEventType.SCORE_CHANGED, null, null, home, away, playerId, detail));
+	}
+
+	/** 득점과 무관한 플레이 한 번. 타자(또는 주자)가 주인공이고, 투수가 맞서는 플레이면 투수도 함께 기록한다. */
+	private void playOnce(LiveStateResponse state, RandomGenerator random) {
+		Game game = gameRepository.findById(state.gameId()).orElseThrow();
+		boolean homeBatting = state.half() == Half.BOTTOM;
+		String battingTeam = homeBatting ? game.getHomeTeam() : game.getAwayTeam();
+		String fieldingTeam = homeBatting ? game.getAwayTeam() : game.getHomeTeam();
+		List<Player> batters = playerRepository.findByTeamNameOrderByBackNumberAsc(battingTeam);
+		List<Player> pitchers = playerRepository.findByTeamNameOrderByBackNumberAsc(fieldingTeam).stream()
+				.filter(player -> "투수".equals(player.getPosition()))
+				.toList();
+		if (batters.isEmpty()) {
+			return;
+		}
+		PlayKind kind = PLAYS.get(random.nextInt(PLAYS.size()));
+		Long batterId = batters.get(random.nextInt(batters.size())).getId();
+		Long pitcherId = PITCHER_PLAYS.contains(kind) && !pitchers.isEmpty()
+				? pitchers.get(random.nextInt(pitchers.size())).getId()
+				: null;
+		gameLiveService.record(state.gameId(),
+				new LiveEventCreateRequest(GameEventType.PLAY, null, null, null, null, batterId, kind.name(), pitcherId));
 	}
 
 	private void endHalfInning(LiveStateResponse state) {

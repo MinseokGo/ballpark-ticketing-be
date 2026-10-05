@@ -69,12 +69,23 @@ public class GameEvent extends BaseTimeEntity {
 	@Column(length = 20)
 	private String detail;
 
+	// 투수 등 두 번째로 관여한 선수(예: 삼진의 투수, 도루를 막은 포수). 없으면 null.
+	@ManyToOne(fetch = FetchType.LAZY)
+	@JoinColumn(name = "secondary_player_id")
+	private Player secondaryPlayer;
+
 	public GameEvent(Game game, int seq, GameEventType type, Integer inning, Half half, int homeScore, int awayScore) {
 		this(game, seq, type, inning, half, homeScore, awayScore, null, null);
 	}
 
 	public GameEvent(Game game, int seq, GameEventType type, Integer inning, Half half, int homeScore, int awayScore,
 			Player player, String detail) {
+		this(game, seq, type, inning, half, homeScore, awayScore, player, detail, null);
+	}
+
+	public GameEvent(Game game, int seq, GameEventType type, Integer inning, Half half, int homeScore, int awayScore,
+			Player player, String detail, Player secondaryPlayer) {
+		this.secondaryPlayer = secondaryPlayer;
 		this.game = game;
 		this.seq = seq;
 		this.type = type;
