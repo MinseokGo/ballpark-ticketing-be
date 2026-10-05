@@ -87,7 +87,8 @@ API를 추가할 때는 도메인 패키지 안에 controller, service, reposito
 - 스타터가 모듈화됐다 (`spring-boot-starter-webmvc`, 각 스타터의 `-test` 모듈). Boot 3 블로그 예제의 의존성 이름과 다를 수 있다.
 - Jackson 3의 패키지는 `tools.jackson.*` (어노테이션은 `com.fasterxml.jackson.annotation` 유지).
 - `@Nullable`은 `org.jspecify.annotations.Nullable`.
-- Hibernate 7은 MySQL에서 `EnumType.STRING` 컬럼을 네이티브 `enum` 타입으로 만든다 (#3).
+- Hibernate 7은 MySQL에서 `EnumType.STRING` 컬럼을 네이티브 `enum` 타입으로 만든다. v1에서는 `preferred_enum_jdbc_type: VARCHAR`로 `varchar`를 쓴다 (#3, 상태 값 추가 시 `ALTER` 불필요).
+- 시각은 `TimeConfig`의 `Clock`(Asia/Seoul)으로만 읽는다. 감사 시각(`createdAt`)과 경기 시작 판정이 같은 기준을 쓴다 (#6).
 
 ## Git / GitHub 규칙
 
@@ -118,4 +119,6 @@ API를 추가할 때는 도메인 패키지 안에 controller, service, reposito
 | 4 | 예매, 결제(Mock), 취소 API: 1인 경기당 최대 4매, 오픈 전 예매 불가, #1 경기 일치 검증 | 진행 중 |
 | 5 | 시딩(구역 30, 좌석 22,000, 경기 5), `docs/experiments/v1-*.md`, `git tag v1.0` | |
 
-열린 이슈: #1 예약 좌석–경기 일치 검증, #2 좌석 동시 선점 제어, #3 enum 컬럼 타입, #4 마이그레이션 도구, #5 결제 취소·환불, #6 시간대 통일. 최신 상태는 `gh issue list`로 확인한다.
+열린 이슈: #2 좌석 동시 선점 제어(v2), #4 마이그레이션 도구. 최신 상태는 `gh issue list`로 확인한다. #1·#3·#5·#6은 v1 마무리 PR에서 처리한다.
+
+환불 정책(v1): 확정 예약은 경기 시작 전까지 전액 환불하고, 시작 후에는 취소를 막는다. 결제는 Mock이라 PG 없이 성공·실패를 고른다(`POST /api/reservations/{id}/payments`).
