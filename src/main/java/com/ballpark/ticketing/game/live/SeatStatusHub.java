@@ -1,5 +1,6 @@
 package com.ballpark.ticketing.game.live;
 
+import com.ballpark.ticketing.game.dto.SeatSelectionResponse;
 import com.ballpark.ticketing.game.dto.SeatStatusResponse;
 import java.io.IOException;
 import java.util.List;
@@ -62,7 +63,27 @@ public class SeatStatusHub {
 		}));
 	}
 
+	/** 지금 고르는 중인 좌석 목록을 모든 구독자에게 보낸다(예매 확정과는 무관한 표시용 신호). */
+	public void publishSelections(Long gameId, List<SeatSelectionResponse> selections) {
+		broadcast(gameId, "selection", selections);
+	}
+
+	/** 새로 연결한 구독자에게 지금의 고르는 중 목록을 한 번 보낸다. */
+	public void sendSelections(SseEmitter emitter, List<SeatSelectionResponse> selections) {
+		synchronized (emitter) {
+			try {
+				emitter.send(SseEmitter.event().name("selection").data(selections));
+			} catch (IOException | IllegalStateException error) {
+				// 연결이 이미 끊긴 경우는 다음 변경 때 정리된다
+			}
+		}
+	}
+
 	private void publish(Long gameId, List<SeatStatusResponse> changes) {
+		broadcast(gameId, "seats", changes);
+	}
+
+	private void broadcast(Long gameId, String eventName, Object data) {
 		Set<SseEmitter> emitters = emittersByGame.get(gameId);
 		if (emitters == null) {
 			return;
@@ -70,7 +91,7 @@ public class SeatStatusHub {
 		for (SseEmitter emitter : emitters) {
 			synchronized (emitter) {
 				try {
-					emitter.send(SseEmitter.event().name("seats").data(changes));
+					emitter.send(SseEmitter.event().name(eventName).data(data));
 				} catch (IOException | IllegalStateException error) {
 					try {
 						emitter.completeWithError(error);
