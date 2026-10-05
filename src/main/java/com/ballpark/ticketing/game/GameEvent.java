@@ -16,6 +16,8 @@ import jakarta.persistence.UniqueConstraint;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 /**
  * 경기 진행 이벤트 로그. 한 경기 안에서 seq가 1부터 올라간다. 현재 상태는 Game 필드에 있고,
@@ -41,12 +43,14 @@ public class GameEvent extends BaseTimeEntity {
 	private int seq;
 
 	@Enumerated(EnumType.STRING)
+	@JdbcTypeCode(SqlTypes.VARCHAR)
 	@Column(nullable = false, length = 30)
 	private GameEventType type;
 
 	private Integer inning;
 
 	@Enumerated(EnumType.STRING)
+	@JdbcTypeCode(SqlTypes.VARCHAR)
 	@Column(length = 10)
 	private Half half;
 

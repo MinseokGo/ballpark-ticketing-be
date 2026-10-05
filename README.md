@@ -21,7 +21,7 @@ com.ballpark.ticketing
 
 ## Configuration notes
 
-- Status columns (`game`, `game_seat`, `reservation`, `payment`) are `varchar(20)`, not MySQL native `enum`: `preferred_enum_jdbc_type: VARCHAR` in `application.yml`. Adding a status value does not need an `ALTER TABLE` (ISSUE-03).
+- Enum columns are `varchar(20)`, not MySQL native `enum`. Every enum field carries `@JdbcTypeCode(SqlTypes.VARCHAR)`. A global Hibernate setting for this does not exist in Hibernate 7, so the annotation is required on each field. Adding a value does not need an `ALTER TABLE` (ISSUE-03).
 - Times are Korean local time (`Asia/Seoul`). Every timestamp reads from the `Clock` bean in `TimeConfig`, not the JVM or DB default, so the server's time zone does not change stored values (ISSUE-06).
 - `spring.jpa.open-in-view: false`: lazy loading only happens inside a transaction, so an entity is never lazily loaded from a controller or during JSON serialization, and a DB connection is not held for the whole request.
 
@@ -104,6 +104,12 @@ Every error is returned as RFC 9457 `application/problem+json`. Besides the stan
 
 ```bash
 ./gradlew bootRun --args='--spring.profiles.active=local,seed'
+```
+
+진행 데이터(지난 경기 결과 2개, 진행 중 경기 2개)는 seed 뒤에 한 번 더 실행한다. 관리자 이벤트 API를 호출한다.
+
+```bash
+BASE_URL=http://localhost:8080 ./scripts/seed-live-results.sh
 ```
 
 프론트엔드 지도가 구역 이름 체계(중앙석/1·3루 필드석/1·3루 외야석 x A~C x 1·2블록)를 해석하므로 구역 이름은
