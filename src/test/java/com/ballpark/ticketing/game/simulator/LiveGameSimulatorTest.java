@@ -43,7 +43,7 @@ class LiveGameSimulatorTest {
 				GameEventType.GAME_STARTED, null, null, null, null));
 
 		RandomGenerator random = RandomGenerator.of("L64X128MixRandom");
-		for (int i = 0; i < 200; i++) {
+		for (int i = 0; i < 1500; i++) {
 			simulator.tick(random);
 		}
 
