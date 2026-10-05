@@ -17,9 +17,15 @@ public record LiveEventCreateRequest(
 		@Min(0) Integer homeScore,
 		@Min(0) Integer awayScore,
 		Long playerId,
-		@Size(max = 20) String detail) {
+		@Size(max = 20) String detail,
+		Long secondaryPlayerId) {
 
 	public LiveEventCreateRequest(GameEventType type, Integer inning, Half half, Integer homeScore, Integer awayScore) {
-		this(type, inning, half, homeScore, awayScore, null, null);
+		this(type, inning, half, homeScore, awayScore, null, null, null);
+	}
+
+	public LiveEventCreateRequest(GameEventType type, Integer inning, Half half, Integer homeScore, Integer awayScore,
+			Long playerId, String detail) {
+		this(type, inning, half, homeScore, awayScore, playerId, detail, null);
 	}
 }

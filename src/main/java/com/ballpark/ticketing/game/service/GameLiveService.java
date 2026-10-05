@@ -6,6 +6,7 @@ import com.ballpark.ticketing.game.Game;
 import com.ballpark.ticketing.game.GameEvent;
 import com.ballpark.ticketing.game.GameEventType;
 import com.ballpark.ticketing.game.Player;
+import com.ballpark.ticketing.game.PlayKind;
 import com.ballpark.ticketing.game.repository.PlayerRepository;
 import com.ballpark.ticketing.game.dto.LiveEventCreateRequest;
 import com.ballpark.ticketing.game.dto.LiveEventResponse;
@@ -40,7 +41,9 @@ public class GameLiveService {
 		Game game = gameRepository.findByIdForUpdate(gameId)
 				.orElseThrow(() -> new BusinessException(ErrorCode.GAME_NOT_FOUND));
 		Player player = findPlayerOf(game, request.playerId());
+		Player secondary = findPlayerOf(game, request.secondaryPlayerId());
 		GameEventType type = request.type();
+		validateDetail(type, request.detail(), player);
 		switch (type) {
 			case GAME_STARTED -> game.start();
 			case INNING_CHANGED -> game.changeInning(required(request.inning()), required(request.half()));
@@ -48,10 +51,11 @@ public class GameLiveService {
 			case SCORE_CORRECTED -> game.correctScore(required(request.homeScore()), required(request.awayScore()));
 			case GAME_FINISHED -> game.finish(required(request.homeScore()), required(request.awayScore()));
 			case GAME_CANCELLED -> game.cancel();
+			case PLAY -> game.recordPlay();
 		}
 		GameEvent event = gameEventRepository.save(new GameEvent(
 				game, game.nextEventSeq(), type, game.getInning(), game.getHalf(),
-				game.getHomeScore(), game.getAwayScore(), player, request.detail()));
+				game.getHomeScore(), game.getAwayScore(), player, request.detail(), secondary));
 		LiveEventResponse response = LiveEventResponse.from(event);
 		hub.publishAfterCommit(gameId, response);
 		return response;
@@ -69,6 +73,20 @@ public class GameLiveService {
 		return gameEventRepository.findByGame_IdAndSeqGreaterThanOrderBySeqAsc(gameId, seq).stream()
 				.map(LiveEventResponse::from)
 				.toList();
+	}
+
+	/** 플레이 기록은 종류와 선수가 있어야 하고, 득점 기록의 종류는 허용된 값만 받는다. */
+	private static void validateDetail(GameEventType type, String detail, Player player) {
+		if (type == GameEventType.PLAY && (detail == null || player == null)) {
+			throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+		}
+		if (detail != null) {
+			try {
+				PlayKind.valueOf(detail);
+			} catch (IllegalArgumentException error) {
+				throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+			}
+		}
 	}
 
 	/** 선수는 이 경기의 두 팀 중 한 팀 소속이어야 한다. */

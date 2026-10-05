@@ -141,6 +141,11 @@ public class Game {
 		this.progress = GameProgress.FINISHED;
 	}
 
+	/** 플레이 기록은 점수나 이닝을 바꾸지 않는다. 진행 중인 경기에서만 받는다. */
+	public void recordPlay() {
+		requireLive();
+	}
+
 	public void cancel() {
 		requireNotEnded();
 		this.progress = GameProgress.CANCELLED;
