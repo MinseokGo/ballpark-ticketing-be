@@ -80,7 +80,7 @@ class PaymentServiceTest {
 	void successfulPaymentConfirmsReservationAndSellsSeats() {
 		ReservationResponse reservation = createPendingReservation();
 
-		PaymentResponse payment = paymentService.pay(reservation.id(), new PaymentCreateRequest(true));
+		PaymentResponse payment = paymentService.pay(reservation.id(), USER_ID, new PaymentCreateRequest(true));
 
 		assertThat(payment.status()).isEqualTo(PaymentStatus.PAID);
 		assertThat(payment.amount()).isEqualTo(reservation.totalPrice());
@@ -95,7 +95,7 @@ class PaymentServiceTest {
 	void failedPaymentKeepsReservationPendingAndSeatsHeld() {
 		ReservationResponse reservation = createPendingReservation();
 
-		PaymentResponse payment = paymentService.pay(reservation.id(), new PaymentCreateRequest(false));
+		PaymentResponse payment = paymentService.pay(reservation.id(), USER_ID, new PaymentCreateRequest(false));
 
 		assertThat(payment.status()).isEqualTo(PaymentStatus.FAILED);
 		assertThat(reservationRepository.findById(reservation.id()).orElseThrow().getStatus())
@@ -107,7 +107,7 @@ class PaymentServiceTest {
 
 	@Test
 	void rejectsPayingForAnUnknownReservation() {
-		assertThatThrownBy(() -> paymentService.pay(999_999L, new PaymentCreateRequest(true)))
+		assertThatThrownBy(() -> paymentService.pay(999_999L, USER_ID, new PaymentCreateRequest(true)))
 				.isInstanceOf(BusinessException.class)
 				.extracting(e -> ((BusinessException) e).getErrorCode())
 				.isEqualTo(ErrorCode.RESERVATION_NOT_FOUND);
@@ -116,9 +116,9 @@ class PaymentServiceTest {
 	@Test
 	void rejectsPayingForAReservationThatIsAlreadyConfirmed() {
 		ReservationResponse reservation = createPendingReservation();
-		paymentService.pay(reservation.id(), new PaymentCreateRequest(true));
+		paymentService.pay(reservation.id(), USER_ID, new PaymentCreateRequest(true));
 
-		assertThatThrownBy(() -> paymentService.pay(reservation.id(), new PaymentCreateRequest(true)))
+		assertThatThrownBy(() -> paymentService.pay(reservation.id(), USER_ID, new PaymentCreateRequest(true)))
 				.isInstanceOf(BusinessException.class)
 				.extracting(e -> ((BusinessException) e).getErrorCode())
 				.isEqualTo(ErrorCode.RESERVATION_NOT_PENDING);

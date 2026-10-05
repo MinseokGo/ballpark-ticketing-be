@@ -1,5 +1,6 @@
 package com.ballpark.ticketing.game.controller;
 
+import com.ballpark.ticketing.common.auth.LoginUser;
 import com.ballpark.ticketing.game.dto.ChatMessageCreateRequest;
 import com.ballpark.ticketing.game.dto.ChatMessageResponse;
 import com.ballpark.ticketing.game.live.GameChatHub;
@@ -39,7 +40,7 @@ public class GameChatController {
 	@ResponseStatus(HttpStatus.CREATED)
 	public ChatMessageResponse post(
 			@PathVariable Long gameId,
-			@RequestHeader("X-User-Id") Long userId,
+			@LoginUser Long userId,
 			@Valid @RequestBody ChatMessageCreateRequest request) {
 		return gameChatService.post(gameId, userId, request.content());
 	}

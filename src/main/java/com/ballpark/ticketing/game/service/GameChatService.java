@@ -8,6 +8,8 @@ import com.ballpark.ticketing.game.dto.ChatMessageResponse;
 import com.ballpark.ticketing.game.live.GameChatHub;
 import com.ballpark.ticketing.game.repository.GameChatMessageRepository;
 import com.ballpark.ticketing.game.repository.GameRepository;
+import com.ballpark.ticketing.user.AppUser;
+import com.ballpark.ticketing.user.UserRepository;
 import java.util.List;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,16 +21,22 @@ public class GameChatService {
 	private final GameRepository gameRepository;
 	private final GameChatMessageRepository messageRepository;
 	private final GameChatHub hub;
+	private final UserRepository userRepository;
 
-	public GameChatService(GameRepository gameRepository, GameChatMessageRepository messageRepository, GameChatHub hub) {
+	public GameChatService(GameRepository gameRepository, GameChatMessageRepository messageRepository, GameChatHub hub,
+			UserRepository userRepository) {
 		this.gameRepository = gameRepository;
 		this.messageRepository = messageRepository;
 		this.hub = hub;
+		this.userRepository = userRepository;
 	}
 
 	public ChatMessageResponse post(Long gameId, Long userId, String content) {
 		Game game = findGame(gameId);
-		GameChatMessage message = messageRepository.save(new GameChatMessage(game, userId, content.trim()));
+		String nickname = userRepository.findById(userId)
+				.map(AppUser::getNickname)
+				.orElseThrow(() -> new BusinessException(ErrorCode.UNAUTHORIZED));
+		GameChatMessage message = messageRepository.save(new GameChatMessage(game, userId, nickname, content.trim()));
 		ChatMessageResponse response = ChatMessageResponse.from(message);
 		hub.publishAfterCommit(gameId, response);
 		return response;

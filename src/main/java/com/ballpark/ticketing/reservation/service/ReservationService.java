@@ -12,6 +12,7 @@ import com.ballpark.ticketing.payment.repository.PaymentRepository;
 import com.ballpark.ticketing.reservation.Reservation;
 import com.ballpark.ticketing.reservation.ReservationStatus;
 import com.ballpark.ticketing.reservation.dto.ReservationCreateRequest;
+import com.ballpark.ticketing.reservation.dto.MyReservationResponse;
 import com.ballpark.ticketing.reservation.dto.ReservationResponse;
 import com.ballpark.ticketing.reservation.repository.ReservationRepository;
 import com.ballpark.ticketing.reservation.repository.ReservationSeatRepository;
@@ -81,8 +82,12 @@ public class ReservationService {
 	 * 결제 대기 예약은 좌석 선점만 풀고, 확정 예약은 결제를 전액 환불하고 좌석을 다시 판매 가능으로 돌린다.
 	 * 확정 예약은 경기 시작 전까지만 취소할 수 있다(시작 후에는 환불 정책이 없다).
 	 */
-	public ReservationResponse cancel(Long reservationId) {
+	/** 본인 예약만 취소할 수 있다. */
+	public ReservationResponse cancel(Long reservationId, Long userId) {
 		Reservation reservation = findReservation(reservationId);
+		if (!reservation.getUserId().equals(userId)) {
+			throw new BusinessException(ErrorCode.FORBIDDEN);
+		}
 		if (reservation.getStatus() == ReservationStatus.CONFIRMED) {
 			if (reservation.getGame().hasStarted(LocalDateTime.now(clock))) {
 				throw new BusinessException(ErrorCode.RESERVATION_NOT_CANCELLABLE);
@@ -96,6 +101,14 @@ public class ReservationService {
 			reservation.getReservationSeats().forEach(reservationSeat -> reservationSeat.getGameSeat().release());
 		}
 		return ReservationResponse.from(reservation);
+	}
+
+	/** 로그인한 사용자의 예약 목록(최신순). 마이페이지와 홈의 '내 예매'가 쓴다. */
+	@Transactional(readOnly = true)
+	public List<MyReservationResponse> myReservations(Long userId) {
+		return reservationRepository.findByUserIdOrderByIdDesc(userId).stream()
+				.map(MyReservationResponse::from)
+				.toList();
 	}
 
 	private Reservation findReservation(Long reservationId) {

@@ -13,6 +13,12 @@ spring:
       pageable:
         max-page-size: 100
 
+app:
+  jwt:
+    # 운영에서는 JWT_SECRET 환경변수로 덮어쓴다. 32바이트 이상이어야 한다.
+    secret: ${JWT_SECRET:local-dev-only-secret-change-me-0123456789}
+    expiry-minutes: 120
+
 management:
   endpoints:
     web:

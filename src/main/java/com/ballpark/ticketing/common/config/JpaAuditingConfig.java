@@ -19,6 +19,6 @@ public class JpaAuditingConfig {
 	// createdAt도 같은 Clock을 쓴다. 기본값은 JVM 기본 시간대를 따르므로 서버 설정에 따라 달라진다.
 	@Bean
 	public DateTimeProvider auditingDateTimeProvider(Clock clock) {
-		return () -> Optional.<TemporalAccessor>of(LocalDateTime.now(clock));
+		return () -> Optional.of(LocalDateTime.now(clock));
 	}
 }

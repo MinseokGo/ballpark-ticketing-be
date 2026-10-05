@@ -14,6 +14,12 @@ public enum ErrorCode {
 	UNSUPPORTED_MEDIA_TYPE(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "COMMON-005", "지원하지 않는 Content-Type입니다."),
 	INTERNAL_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "COMMON-999", "서버 내부 오류가 발생했습니다."),
 
+	// 인증
+	UNAUTHORIZED(HttpStatus.UNAUTHORIZED, "AUTH-001", "로그인이 필요합니다."),
+	EMAIL_DUPLICATE(HttpStatus.CONFLICT, "AUTH-002", "이미 가입된 이메일입니다."),
+	LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "AUTH-003", "이메일 또는 비밀번호가 올바르지 않습니다."),
+	FORBIDDEN(HttpStatus.FORBIDDEN, "AUTH-004", "본인의 예약만 처리할 수 있습니다."),
+
 	// 구역·좌석
 	INVALID_SECTION_PRICE(HttpStatus.BAD_REQUEST, "SEAT-001", "구역 가격은 0 이상이어야 합니다."),
 	SEAT_NOT_AVAILABLE(HttpStatus.CONFLICT, "SEAT-002", "선점할 수 없는 좌석입니다."),
